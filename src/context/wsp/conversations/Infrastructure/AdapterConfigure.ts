@@ -1,0 +1,13 @@
+import { ENVIRONMENT } from '@env';
+
+export const AdapterConfigure = {
+  SCHEMA: ENVIRONMENT.CONVERSATION.SCHEMA,
+  ENTITY: ENVIRONMENT.CONVERSATION.ENTITY,
+  ROUTE: ENVIRONMENT.CONVERSATION.ROUTE,
+
+  ENDPOINT: {
+    LIST: ENVIRONMENT.CONVERSATION.ROUTE,
+    BY_ID: (id: string | number) => `${ENVIRONMENT.CONVERSATION.ROUTE}/${id}`,
+    MESSAGES: (id: string | number) => `${ENVIRONMENT.CONVERSATION.ROUTE}/${id}/messages`,
+  },
+};

@@ -1,0 +1,14 @@
+import { ENVIRONMENT } from '@env';
+
+export const AdapterConfigure = {
+  SCHEMA: ENVIRONMENT.AI_AGENT.SCHEMA,
+  ENTITY: ENVIRONMENT.AI_AGENT.ENTITY,
+  ROUTE: ENVIRONMENT.AI_AGENT.ROUTE,
+
+  ENDPOINT: {
+    LIST: ENVIRONMENT.AI_AGENT.ROUTE,
+    CREATE: ENVIRONMENT.AI_AGENT.ROUTE,
+    UPDATE: (id: number | string) => `${ENVIRONMENT.AI_AGENT.ROUTE}/${id}`,
+    REMOVE: (id: number | string) => `${ENVIRONMENT.AI_AGENT.ROUTE}/${id}`,
+  },
+};

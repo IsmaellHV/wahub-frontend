@@ -1,0 +1,14 @@
+import { ENVIRONMENT } from '@env';
+
+export const AdapterConfigure = {
+  SCHEMA: ENVIRONMENT.BROADCAST.SCHEMA,
+  ENTITY: ENVIRONMENT.BROADCAST.ENTITY,
+  ROUTE: ENVIRONMENT.BROADCAST.ROUTE,
+
+  ENDPOINT: {
+    LIST: ENVIRONMENT.BROADCAST.ROUTE,
+    CREATE: ENVIRONMENT.BROADCAST.ROUTE,
+    BY_ID: (id: string | number) => `${ENVIRONMENT.BROADCAST.ROUTE}/${id}`,
+    SEND: (id: string | number) => `${ENVIRONMENT.BROADCAST.ROUTE}/${id}/send`,
+  },
+};
