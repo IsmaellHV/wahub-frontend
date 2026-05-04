@@ -1,29 +1,18 @@
-// Central environment config — mirrors backend ENVIRONMENT shape.
-// Single source of truth for schemas, entities, and base URLs.
-//
-// Usage in entity AdapterConfigure:
-//   import { ENVIRONMENT } from '@/env';
-//   const SCHEMA = ENVIRONMENT.USUARIO.SCHEMA;
-//   const ENTITY = ENVIRONMENT.USUARIO.ENTITY;
-
-const env = process.env;
-
-// underscore_case → dash-case for URL paths
 const dash = (v: string): string => v.replace(/_/g, '-');
 
 const buildRoute = (schema: string, entity: string): string => `/${dash(schema)}/${dash(entity)}`;
 
 export const ENVIRONMENT = {
   APP: {
-    URL: env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+    URL: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
   },
 
   API: {
-    URL: (env.NEXT_PUBLIC_API_URL || 'http://localhost:7001/api/wahub').replace(/\/$/, ''),
+    URL: (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7001/api/wahub').replace(/\/$/, ''),
   },
 
   WS: {
-    URL: env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000',
+    URL: process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000',
   },
 
   USUARIO: {
