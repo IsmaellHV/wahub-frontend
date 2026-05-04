@@ -9,11 +9,27 @@ interface Props {
   actions?: ReactNode;
 }
 
+const toggleMobileSidebar = () => {
+  const app = document.querySelector('.app');
+  if (!app) return;
+  const willOpen = !app.classList.contains('sidebar-open');
+  app.classList.toggle('sidebar-open', willOpen);
+  document.body.style.overflow = willOpen ? 'hidden' : '';
+};
+
 export const Topbar = ({ crumbs = [], actions }: Props) => {
   const { theme, toggleTheme } = useTheme();
   const { t } = useI18n();
   return (
     <div className="topbar">
+      <button
+        className="topbar-menu-btn icon-btn"
+        onClick={toggleMobileSidebar}
+        aria-label="Menu"
+        title="Menu"
+      >
+        <Icon name="menu" size={18} />
+      </button>
       <div className="crumbs">
         {crumbs.map((c, i) => (
           <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>

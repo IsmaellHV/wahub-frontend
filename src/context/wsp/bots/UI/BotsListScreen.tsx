@@ -53,16 +53,6 @@ const formatDate = (iso?: string | null): string => {
   }
 };
 
-const formatDateTime = (iso?: string | null): string => {
-  if (!iso) return '—';
-  try {
-    const d = new Date(iso);
-    return `${d.toLocaleDateString(undefined, { month: 'short', day: '2-digit' })} · ${d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
-  } catch {
-    return '—';
-  }
-};
-
 export const BotsListScreen = () => {
   const { t } = useI18n();
   const [filter, setFilter] = useState<Filter>('all');

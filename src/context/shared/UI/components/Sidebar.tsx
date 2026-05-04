@@ -39,6 +39,13 @@ const isActive = (pathname: string, href: string) => {
   return pathname === href || pathname.startsWith(href + '/');
 };
 
+const closeMobileSidebar = () => {
+  const app = document.querySelector('.app');
+  if (!app) return;
+  app.classList.remove('sidebar-open');
+  document.body.style.overflow = '';
+};
+
 export const Sidebar = () => {
   const pathname = usePathname();
   const router = useRouter();
@@ -47,6 +54,7 @@ export const Sidebar = () => {
   const { logout } = useUsuario();
 
   const handleLogout = () => {
+    closeMobileSidebar();
     logout();
     router.push('/login');
   };
@@ -55,6 +63,12 @@ export const Sidebar = () => {
   const build = BUILD(t);
 
   return (
+    <>
+      <div
+        className="sidebar-backdrop"
+        onClick={closeMobileSidebar}
+        aria-hidden="true"
+      />
     <aside className="sidebar">
       <div className="sidebar-header">
         <Link href="/" className="brand">
@@ -72,7 +86,7 @@ export const Sidebar = () => {
 
       <div className="sidebar-section">
         {primary.map((it) => (
-          <Link key={it.href} href={it.href} className={`nav-item ${isActive(pathname, it.href) ? 'active' : ''}`}>
+          <Link key={it.href} href={it.href} onClick={closeMobileSidebar} className={`nav-item ${isActive(pathname, it.href) ? 'active' : ''}`}>
             <span className="nav-icon">
               <Icon name={it.icon} size={15} />
             </span>
@@ -87,7 +101,7 @@ export const Sidebar = () => {
       <div className="sidebar-section">
         <div className="sidebar-label">Build</div>
         {build.map((it) => (
-          <Link key={it.href} href={it.href} className={`nav-item ${isActive(pathname, it.href) ? 'active' : ''}`}>
+          <Link key={it.href} href={it.href} onClick={closeMobileSidebar} className={`nav-item ${isActive(pathname, it.href) ? 'active' : ''}`}>
             <span className="nav-icon">
               <Icon name={it.icon} size={15} />
             </span>
@@ -98,13 +112,13 @@ export const Sidebar = () => {
       </div>
 
       <div className="sidebar-section">
-        <Link href="/profile" className={`nav-item ${isActive(pathname, '/profile') ? 'active' : ''}`}>
+        <Link href="/profile" onClick={closeMobileSidebar} className={`nav-item ${isActive(pathname, '/profile') ? 'active' : ''}`}>
           <span className="nav-icon">
             <Icon name="user" size={15} />
           </span>
           <span>{t('nav.profile')}</span>
         </Link>
-        <Link href="/settings" className={`nav-item ${isActive(pathname, '/settings') ? 'active' : ''}`}>
+        <Link href="/settings" onClick={closeMobileSidebar} className={`nav-item ${isActive(pathname, '/settings') ? 'active' : ''}`}>
           <span className="nav-icon">
             <Icon name="settings" size={15} />
           </span>
@@ -115,6 +129,7 @@ export const Sidebar = () => {
       <div className="sidebar-footer">
         <Link
           href="/profile"
+          onClick={closeMobileSidebar}
           className="user-link"
           aria-label={t('nav.profile')}
           style={{
@@ -158,5 +173,6 @@ export const Sidebar = () => {
         </button>
       </div>
     </aside>
+    </>
   );
 };

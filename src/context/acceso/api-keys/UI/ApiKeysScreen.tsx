@@ -1,7 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { Icon } from '@shared/UI/components/Icon';
-import { useI18n } from '@shared/i18n/I18nProvider';
 import { RepositoryApiKeyImpl } from '../Infrastructure/RepositoryImpl';
 import type { IApiKey, IApiKeyCreated } from '../Domain/IApiKey';
 
@@ -18,7 +17,6 @@ const formatDate = (iso?: string | null): string => {
 };
 
 export const ApiKeysScreen = () => {
-  const { t } = useI18n();
   const [keys, setKeys] = useState<IApiKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -287,7 +285,7 @@ export const ApiKeysScreen = () => {
         <Modal onClose={() => !createBusy && setCreating(false)}>
           <h3 style={{ marginTop: 0 }}>Nueva clave de API</h3>
           <div style={{ fontSize: 13, color: 'var(--fg-muted)', marginBottom: 14 }}>
-            Ponle un nombre que recuerdes (ej. "Producción", "Servidor backend").
+            Ponle un nombre que recuerdes (ej. &quot;Producción&quot;, &quot;Servidor backend&quot;).
           </div>
           <input
             className="input"
