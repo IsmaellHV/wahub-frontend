@@ -35,27 +35,39 @@ export const es: Dict = {
   },
 
   landing: {
+    nav: {
+      github: 'GitHub',
+      login: 'Iniciar sesión',
+      signup: 'Crear cuenta',
+    },
     hero: {
-      eyebrow: 'WhatsApp · IA · Automatización',
-      title: 'Tu WhatsApp.',
-      titleAccent: 'En piloto automático.',
-      subtitle: 'Conecta cualquier número de WhatsApp, conecta agentes de IA, automatiza respuestas. Sin código, sin fricción.',
-      ctaPrimary: 'Comenzar gratis',
+      pill: 'waHub está disponible',
+      title: 'La nueva forma',
+      titleLine2: 'de automatizar',
+      titleAccent: 'WhatsApp',
+      subtitle: 'Conecta cualquier número, configura un agente con IA, deja que el bot trabaje por ti.',
+      ctaPrimary: 'Empezar',
       ctaSecondary: 'Iniciar sesión',
     },
-    features: {
-      title: 'Todo lo que necesitas',
-      subtitle: 'Plataforma completa para escalar conversaciones.',
-      one: { title: 'Multi-sesión', body: 'Conecta tantos números como necesites. Cada uno aislado, con su propio contexto.' },
-      two: { title: 'Agentes IA', body: 'Entrena personalidades. Conecta OpenAI, Claude o tu propio modelo.' },
-      three: { title: 'Tiempo real', body: 'Mira los mensajes en vivo. WebSockets sincronizan todos tus dispositivos.' },
+    panels: {
+      one: { title: 'Conecta tu número', body: 'Escanea el QR desde tu WhatsApp. La sesión queda lista en segundos.' },
+      two: { title: 'Configura tu agente IA', body: 'Dale personalidad, elige el modelo y conecta tu API key. Responde con tu tono.' },
+      three: { title: 'Conversaciones en vivo', body: 'Tu bot lee, piensa y responde. Tú monitoreas todo desde el inbox.' },
+      four: { title: 'Multi-sesión', body: 'Tantos números como necesites. Cada uno aislado, con su propio agente.' },
+      five: { title: 'Tiempo real', body: 'WebSockets en cada vista. Mensajes, estados y eventos sincronizados al instante.' },
+      six: { title: 'Listo. Escala.', body: 'Multi-flujo, sin tocar el código. Crece sin fricción.' },
     },
-    cta: {
-      title: '¿Listo para escalar?',
-      body: 'Crea tu workspace en menos de 60 segundos.',
-      button: 'Empezar gratis',
+    final: {
+      title: 'Tu siguiente paso.',
+      subtitle: 'Conecta un número en 60 segundos.',
+      cta: 'Empezar',
     },
-    footer: 'Hecho con cuidado para builders.',
+    footer: {
+      github: 'GitHub',
+      login: 'Iniciar sesión',
+      signup: 'Crear cuenta',
+      copy: 'por',
+    },
   },
 
   auth: {

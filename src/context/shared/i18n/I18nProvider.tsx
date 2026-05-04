@@ -6,13 +6,12 @@ import { es } from './locales/es';
 export type Locale = 'en' | 'es';
 const DICTS: Record<Locale, Dict> = { en, es };
 const STORAGE_KEY = 'wahub:locale';
+const COOKIE_KEY = 'wahub:locale';
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
 
-const detectInitial = (): Locale => {
-  if (typeof window === 'undefined') return 'en';
-  const stored = window.localStorage.getItem(STORAGE_KEY);
-  if (stored === 'es' || stored === 'en') return stored;
-  const nav = window.navigator.language?.toLowerCase() ?? '';
-  return nav.startsWith('es') ? 'es' : 'en';
+const writeCookie = (l: Locale): void => {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${COOKIE_KEY}=${l}; path=/; max-age=${COOKIE_MAX_AGE}; samesite=lax`;
 };
 
 interface Ctx {
@@ -43,17 +42,33 @@ const interpolate = (s: string, vars?: Record<string, string | number>): string 
   return s.replace(/\{(\w+)\}/g, (_, k: string) => (k in vars ? String(vars[k]) : `{${k}}`));
 };
 
-export const I18nProvider = ({ children }: { children: React.ReactNode }) => {
-  // Always start with 'en' on server. Hydrate to actual on mount.
-  const [locale, setLocaleState] = useState<Locale>('en');
+interface Props {
+  children: React.ReactNode;
+  // Resolved by the server (middleware + cookie) so SSR and the first client
+  // render agree — kills the EN → ES content flash on hydration.
+  initialLocale?: Locale;
+}
 
+export const I18nProvider = ({ children, initialLocale = 'en' }: Props) => {
+  const [locale, setLocaleState] = useState<Locale>(initialLocale);
+
+  // Sync localStorage so the toggle persists across explicit user changes
+  // and stays consistent with the cookie set by the middleware.
   useEffect(() => {
-    setLocaleState(detectInitial());
-  }, []);
+    if (typeof window === 'undefined') return;
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    if (stored !== initialLocale && (stored === 'en' || stored === 'es')) {
+      // User picked a locale in another tab — honor it.
+      setLocaleState(stored);
+    } else if (!stored) {
+      window.localStorage.setItem(STORAGE_KEY, initialLocale);
+    }
+  }, [initialLocale]);
 
   const setLocale = useCallback((l: Locale) => {
     setLocaleState(l);
     if (typeof window !== 'undefined') window.localStorage.setItem(STORAGE_KEY, l);
+    writeCookie(l);
   }, []);
 
   const dict = DICTS[locale];

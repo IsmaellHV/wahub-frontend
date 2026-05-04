@@ -33,27 +33,39 @@ export const en = {
   },
 
   landing: {
+    nav: {
+      github: 'GitHub',
+      login: 'Log in',
+      signup: 'Sign up',
+    },
     hero: {
-      eyebrow: 'WhatsApp · AI · Automation',
-      title: 'Your WhatsApp.',
-      titleAccent: 'On autopilot.',
-      subtitle: 'Connect any WhatsApp number, plug in AI agents, automate replies. No code, no friction.',
-      ctaPrimary: 'Get started free',
+      pill: 'waHub is available',
+      title: 'The new way to',
+      titleLine2: 'automate',
+      titleAccent: 'WhatsApp',
+      subtitle: 'Connect any number, configure an AI agent, let the bot work for you.',
+      ctaPrimary: 'Get started',
       ctaSecondary: 'Sign in',
     },
-    features: {
-      title: 'Everything you need',
-      subtitle: 'A complete platform to scale conversations.',
-      one: { title: 'Multi-session', body: 'Connect as many WhatsApp numbers as you need. Each one isolated, with its own context.' },
-      two: { title: 'AI agents', body: 'Train custom personalities. Plug in OpenAI, Claude, or your own model.' },
-      three: { title: 'Realtime', body: 'See messages flow live. WebSockets keep every device in sync.' },
+    panels: {
+      one: { title: 'Connect your number', body: 'Scan the QR from your WhatsApp. Session is ready in seconds.' },
+      two: { title: 'Configure your AI agent', body: 'Give it personality, pick the model and plug in your API key. Replies in your tone.' },
+      three: { title: 'Live conversations', body: 'Your bot reads, thinks and replies. You monitor everything from the inbox.' },
+      four: { title: 'Multi-session', body: 'As many numbers as you need. Each one isolated, with its own agent.' },
+      five: { title: 'Realtime', body: 'WebSockets on every screen. Messages, states and events synced instantly.' },
+      six: { title: 'Done. Scale.', body: 'Multi-flow, no code needed. Grow without friction.' },
     },
-    cta: {
-      title: 'Ready to scale?',
-      body: 'Create your workspace in under 60 seconds.',
-      button: 'Start free',
+    final: {
+      title: 'Your next step.',
+      subtitle: 'Connect a number in 60 seconds.',
+      cta: 'Get started',
     },
-    footer: 'Made with care for builders.',
+    footer: {
+      github: 'GitHub',
+      login: 'Sign in',
+      signup: 'Create account',
+      copy: 'by',
+    },
   },
 
   auth: {
