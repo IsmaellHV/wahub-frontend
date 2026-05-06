@@ -1,191 +1,116 @@
 'use client';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Icon, type IconName } from '@shared/UI/components/Icon';
-import { Sparkline } from '@shared/UI/components/Sparkline';
 import { Topbar } from '@shared/UI/components/Topbar';
-import { MOCK_BOTS } from '@wsp/bots/Infrastructure/mockBots';
-import { BigChart } from './BigChart';
+import { useI18n } from '@shared/i18n/I18nProvider';
+import { useCurrentUser } from '@acceso/usuarios/Application/useCurrentUser';
+import { RepositoryConnectionImpl } from '@wsp/connections/Infrastructure/RepositoryImpl';
+import type { IConnection } from '@wsp/connections/Domain/IConnection';
 
-interface ActivityItem {
-  t: string;
-  msg: string;
-  kind: 'ai' | 'send' | 'user' | 'warn' | 'webhook';
-  bot: string;
-}
-
-const ACTIVITY: ActivityItem[] = [
-  { t: '2m', msg: 'AI handled conversation with María González', kind: 'ai', bot: 'Lunaría' },
-  { t: '8m', msg: 'New broadcast "Promo May" sent to 1,240 contacts', kind: 'send', bot: 'Acme' },
-  { t: '14m', msg: 'Sofía Ramírez requested human handoff', kind: 'user', bot: 'Acme' },
-  { t: '26m', msg: 'Bot SkyRide reconnected after 12s downtime', kind: 'warn', bot: 'SkyRide' },
-  { t: '1h', msg: 'API webhook delivered: order.created → /hooks/orders', kind: 'webhook', bot: '—' },
-];
-
-const ACTIVITY_ICON: Record<ActivityItem['kind'], IconName> = {
-  ai: 'sparkles',
-  send: 'send',
-  user: 'user',
-  warn: 'bell',
-  webhook: 'webhook',
-};
+const connRepo = new RepositoryConnectionImpl();
 
 export const DashboardScreen = () => {
-  const stats = [
-    { label: 'Active bots', value: '5', delta: '+2 this week', up: true, spark: [3, 3, 3, 4, 4, 5, 5] },
-    { label: 'Messages 24h', value: '25,950', delta: '+12.4%', up: true, spark: [120, 180, 220, 200, 260, 310, 290, 340, 380, 410, 450, 440] },
-    { label: 'AI responses', value: '18,221', delta: '70.2% rate', up: true, spark: [40, 55, 60, 80, 90, 110, 140, 170, 200, 210, 240, 260] },
-    { label: 'Avg. response', value: '1.4s', delta: '−0.3s', up: true, spark: [3, 2.8, 2.5, 2.2, 2, 1.8, 1.6, 1.5, 1.4, 1.4, 1.4, 1.4] },
-  ];
+  const { t } = useI18n();
+  const user = useCurrentUser();
+  const [connections, setConnections] = useState<IConnection[] | null>(null);
 
-  const intents = [
-    { label: 'Pricing question', n: 1842, pct: 100 },
-    { label: 'Order status', n: 1206, pct: 65 },
-    { label: 'Schedule appointment', n: 824, pct: 45 },
-    { label: 'Product availability', n: 612, pct: 33 },
-    { label: 'Support / complaint', n: 298, pct: 16 },
-    { label: 'Refund request', n: 142, pct: 8 },
-  ];
+  useEffect(() => {
+    let alive = true;
+    connRepo
+      .list()
+      .then((list) => alive && setConnections(list))
+      .catch(() => alive && setConnections([]));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const total = connections?.length ?? 0;
+  const connected = connections?.filter((c) => c.state === 'connected').length ?? 0;
+
+  const displayName = user?.display_name?.trim() || user?.email?.split('@')[0] || '';
+  const welcomeText = displayName
+    ? t('dashboard.welcome').replace('{name}', displayName)
+    : t('dashboard.welcomeFallback');
 
   return (
     <>
-      <Topbar crumbs={['Workspace', 'Dashboard']} />
+      <Topbar crumbs={[t('dashboard.crumbWorkspace'), t('dashboard.crumbDashboard')]} />
       <div className="page fade-in">
         <div className="page-h">
           <div>
-            <h1>Dashboard</h1>
-            <div className="sub">Welcome back, Diego — here&apos;s what&apos;s happening across your bots.</div>
+            <h1>{t('dashboard.title')}</h1>
+            <div className="sub">
+              {welcomeText} — {t('dashboard.subtitleSuffix')}
+            </div>
           </div>
           <div className="actions">
-            <button className="btn btn-secondary">
-              <Icon name="download" size={14} /> Export
-            </button>
             <Link href="/connect" className="btn btn-brand">
-              <Icon name="plus" size={14} /> Connect WhatsApp
+              <Icon name="plus" size={14} /> {t('dashboard.connectCta')}
             </Link>
           </div>
         </div>
 
+        {/* Stats — only `active sessions` is real; the rest are honest placeholders
+            until the backend exposes aggregate endpoints. */}
         <div className="stat-grid">
-          {stats.map((s, i) => (
-            <div className="stat" key={i}>
-              <div className="label">{s.label}</div>
-              <div className="value">{s.value}</div>
-              <div className={`delta ${s.up ? 'up' : 'down'}`}>{s.delta}</div>
-              <Sparkline data={s.spark} />
-            </div>
-          ))}
+          <StatCard
+            label={t('dashboard.stats.activeSessions')}
+            value={connections === null ? '—' : String(connected)}
+            delta={connections === null ? '' : t('dashboard.stats.activeOf').replace('{n}', String(connected)).replace('{total}', String(total))}
+            real
+          />
+          <StatCard label={t('dashboard.stats.messages24h')} value="—" delta={t('dashboard.stats.soon')} />
+          <StatCard label={t('dashboard.stats.aiResponses')} value="—" delta={t('dashboard.stats.soon')} />
+          <StatCard label={t('dashboard.stats.avgResponse')} value="—" delta={t('dashboard.stats.soon')} />
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 16 }}>
+          {/* Real session status from backend */}
           <div className="card">
             <div className="card-h">
-              <h3>Message volume</h3>
-              <div className="actions">
-                <button className="btn btn-ghost btn-sm">24h</button>
-                <button className="btn btn-secondary btn-sm">7d</button>
-                <button className="btn btn-ghost btn-sm">30d</button>
-              </div>
-            </div>
-            <div className="card-body">
-              <BigChart />
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="card-h">
-              <h3>Bot status</h3>
+              <h3>{t('dashboard.sessions.title')}</h3>
               <div className="actions">
                 <Link href="/bots" className="btn btn-ghost btn-sm">
-                  View all
+                  {t('dashboard.sessions.viewAll')}
                 </Link>
               </div>
             </div>
             <div className="card-body" style={{ padding: 0 }}>
-              {MOCK_BOTS.slice(0, 4).map((b) => (
-                <div key={b.id} className="row" style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-subtle)', gap: 12 }}>
-                  <div className="bot-icon" style={{ width: 28, height: 28, fontSize: 11 }}>
-                    {b.initials}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 550, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.name}</div>
-                    <div style={{ fontSize: 11.5, color: 'var(--fg-faint)', fontFamily: 'var(--font-mono)' }}>{b.number}</div>
-                  </div>
-                  <span className={`pill pill-${b.status === 'online' ? 'online' : b.status === 'warn' ? 'warn' : 'idle'}`}>
-                    <span className={`dot dot-${b.status === 'online' ? 'online pulse' : b.status === 'warn' ? 'warn' : 'idle'}`} />
-                    {b.status}
-                  </span>
+              {connections === null && (
+                <div style={{ padding: 24, textAlign: 'center', color: 'var(--fg-muted)', fontSize: 13 }}>
+                  {t('common.loading')}
                 </div>
+              )}
+              {connections !== null && connections.length === 0 && (
+                <div style={{ padding: 32, textAlign: 'center' }}>
+                  <div className="empty-icon" style={{ marginBottom: 8 }}>
+                    <Icon name="bot" size={18} />
+                  </div>
+                  <div style={{ fontSize: 13, color: 'var(--fg-muted)', marginBottom: 14 }}>
+                    {t('dashboard.sessions.empty')}
+                  </div>
+                  <Link href="/connect" className="btn btn-brand btn-sm">
+                    <Icon name="plus" size={12} /> {t('dashboard.connectCta')}
+                  </Link>
+                </div>
+              )}
+              {connections?.slice(0, 5).map((c) => (
+                <SessionRow key={c.id} c={c} />
               ))}
             </div>
           </div>
-        </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16 }}>
+          {/* Quick actions — links to real flows */}
           <div className="card">
             <div className="card-h">
-              <h3>Recent activity</h3>
+              <h3>{t('dashboard.quick.title')}</h3>
             </div>
             <div className="card-body" style={{ padding: 0 }}>
-              {ACTIVITY.map((a, i) => (
-                <div
-                  key={i}
-                  className="row"
-                  style={{ padding: '11px 16px', borderBottom: '1px solid var(--border-subtle)', gap: 12, fontSize: 13 }}
-                >
-                  <div
-                    style={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: 6,
-                      background: 'var(--bg-muted)',
-                      display: 'grid',
-                      placeItems: 'center',
-                      color: 'var(--fg-muted)',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Icon name={ACTIVITY_ICON[a.kind]} size={12} />
-                  </div>
-                  <span style={{ flex: 1, color: 'var(--fg-muted)' }}>{a.msg}</span>
-                  <span className="mono faint" style={{ fontSize: 11 }}>
-                    {a.bot}
-                  </span>
-                  <span className="mono faint" style={{ fontSize: 11, width: 32, textAlign: 'right' }}>
-                    {a.t}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="card-h">
-              <h3>Top intents (last 24h)</h3>
-              <div className="actions">
-                <span className="pill pill-brand">
-                  <Icon name="sparkles" size={10} /> AI
-                </span>
-              </div>
-            </div>
-            <div className="card-body">
-              {intents.map((r, i) => (
-                <div key={i} style={{ marginBottom: 10 }}>
-                  <div className="row-between" style={{ marginBottom: 4, fontSize: 12.5 }}>
-                    <span>{r.label}</span>
-                    <span className="mono faint">{r.n.toLocaleString()}</span>
-                  </div>
-                  <div style={{ height: 4, background: 'var(--bg-muted)', borderRadius: 2, overflow: 'hidden' }}>
-                    <div
-                      style={{
-                        height: '100%',
-                        width: r.pct + '%',
-                        background: 'linear-gradient(90deg, var(--brand-500), var(--brand-400))',
-                        borderRadius: 2,
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
+              <QuickAction href="/connect" icon="qr" h={t('dashboard.quick.connect.h')} s={t('dashboard.quick.connect.s')} />
+              <QuickAction href="/messages" icon="send" h={t('dashboard.quick.send.h')} s={t('dashboard.quick.send.s')} />
+              <QuickAction href="/api" icon="key" h={t('dashboard.quick.api.h')} s={t('dashboard.quick.api.s')} last />
             </div>
           </div>
         </div>
@@ -193,3 +118,122 @@ export const DashboardScreen = () => {
     </>
   );
 };
+
+interface StatCardProps {
+  label: string;
+  value: string;
+  delta: string;
+  real?: boolean;
+}
+
+const StatCard = ({ label, value, delta, real }: StatCardProps) => (
+  <div className="stat">
+    <div className="label">{label}</div>
+    <div className="value">{value}</div>
+    {delta && (
+      <div
+        className="delta"
+        style={
+          real
+            ? undefined
+            : { color: 'var(--fg-faint)', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 500 }
+        }
+      >
+        {delta}
+      </div>
+    )}
+  </div>
+);
+
+const STATE_PILL: Record<IConnection['state'], { cls: string; label: string }> = {
+  connected: { cls: 'online', label: 'connected' },
+  scanning: { cls: 'warn', label: 'scanning' },
+  revision: { cls: 'warn', label: 'revision' },
+  connecting: { cls: 'warn', label: 'connecting' },
+  idle: { cls: 'idle', label: 'idle' },
+  disconnected: { cls: 'idle', label: 'disconnected' },
+};
+
+const initialsOf = (name: string): string => {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return (parts[0]?.slice(0, 2) ?? '?').toUpperCase();
+};
+
+const SessionRow = ({ c }: { c: IConnection }) => {
+  const pill = STATE_PILL[c.state];
+  const dotPulse = c.state === 'connected' ? ' pulse' : '';
+  return (
+    <Link
+      href={`/bots/${c.id}`}
+      className="row"
+      style={{
+        padding: '12px 16px',
+        borderBottom: '1px solid var(--border-subtle)',
+        gap: 12,
+        textDecoration: 'none',
+        color: 'inherit',
+      }}
+    >
+      <div className="bot-icon" style={{ width: 28, height: 28, fontSize: 11 }}>
+        {initialsOf(c.name)}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 550, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {c.name}
+        </div>
+        <div style={{ fontSize: 11.5, color: 'var(--fg-faint)', fontFamily: 'var(--font-mono)' }}>
+          {c.number ?? c.code ?? c.session_id.slice(0, 12)}
+        </div>
+      </div>
+      <span className={`pill pill-${pill.cls}`}>
+        <span className={`dot dot-${pill.cls}${dotPulse}`} />
+        {pill.label}
+      </span>
+    </Link>
+  );
+};
+
+interface QuickActionProps {
+  href: string;
+  icon: IconName;
+  h: string;
+  s: string;
+  last?: boolean;
+}
+
+const QuickAction = ({ href, icon, h, s, last }: QuickActionProps) => (
+  <Link
+    href={href}
+    className="row"
+    style={{
+      padding: '14px 16px',
+      borderBottom: last ? 'none' : '1px solid var(--border-subtle)',
+      gap: 12,
+      textDecoration: 'none',
+      color: 'inherit',
+      transition: 'background .12s',
+    }}
+  >
+    <div
+      style={{
+        width: 32,
+        height: 32,
+        borderRadius: 8,
+        background: 'color-mix(in srgb, var(--brand-500) 12%, transparent)',
+        border: '1px solid color-mix(in srgb, var(--brand-500) 30%, transparent)',
+        color: 'var(--brand-500)',
+        display: 'grid',
+        placeItems: 'center',
+        flexShrink: 0,
+      }}
+    >
+      <Icon name={icon} size={14} />
+    </div>
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ fontSize: 13.5, fontWeight: 550, color: 'var(--fg)' }}>{h}</div>
+      <div style={{ fontSize: 12, color: 'var(--fg-muted)' }}>{s}</div>
+    </div>
+    <Icon name="arrow_right" size={14} style={{ color: 'var(--fg-faint)' }} />
+  </Link>
+);

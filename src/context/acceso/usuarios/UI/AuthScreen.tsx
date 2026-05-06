@@ -3,8 +3,10 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useState } from 'react';
 import { Logo } from '@shared/UI/components/Logo';
+import { Icon } from '@shared/UI/components/Icon';
 import { useUsuario } from '../Application/useUsuario';
 import { useI18n } from '@shared/i18n/I18nProvider';
+import { useTheme } from '@shared/UI/ThemeProvider';
 
 interface Props {
   mode: 'login' | 'signup';
@@ -12,7 +14,8 @@ interface Props {
 
 export const AuthScreen = ({ mode }: Props) => {
   const router = useRouter();
-  const { t } = useI18n();
+  const { t, locale, setLocale } = useI18n();
+  const { theme, toggleTheme } = useTheme();
   const { loading, error, login, signUp } = useUsuario();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -37,6 +40,25 @@ export const AuthScreen = ({ mode }: Props) => {
 
   return (
     <div className="auth">
+      {/* Floating top-right toolbar: theme + locale toggles */}
+      <div className="auth-toolbar">
+        <button
+          className="auth-tool-btn"
+          onClick={toggleTheme}
+          aria-label={theme === 'dark' ? 'Switch to light' : 'Switch to dark'}
+          title={theme === 'dark' ? 'Switch to light' : 'Switch to dark'}
+        >
+          <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={15} />
+        </button>
+        <button
+          className="auth-tool-btn auth-tool-locale"
+          onClick={() => setLocale(locale === 'es' ? 'en' : 'es')}
+          aria-label="Toggle language"
+          title={locale === 'es' ? 'Switch to English' : 'Cambiar a español'}
+        >
+          {locale === 'es' ? 'EN' : 'ES'}
+        </button>
+      </div>
       <div style={{ display: 'grid', placeItems: 'center' }}>
         <form className="auth-form" onSubmit={onSubmit}>
           <Link href="/" className="brand" style={{ marginBottom: 32 }}>
@@ -146,24 +168,41 @@ export const AuthScreen = ({ mode }: Props) => {
 
       <div className="auth-art">
         <div className="auth-art-grid" />
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: 380, textAlign: 'center' }}>
-          <Logo size={88} />
+        <div style={{ position: 'relative', zIndex: 1, maxWidth: 420, textAlign: 'center' }}>
+          <div
+            style={{
+              display: 'inline-flex',
+              padding: 4,
+              borderRadius: 28,
+              background: 'linear-gradient(135deg, color-mix(in srgb, var(--brand-500) 30%, transparent), transparent)',
+              boxShadow: '0 0 60px color-mix(in srgb, var(--brand-500) 25%, transparent)',
+            }}
+          >
+            <Logo size={88} />
+          </div>
           <div
             style={{
               marginTop: 32,
-              fontSize: 26,
+              fontSize: 'clamp(24px, 2.4vw, 30px)',
               fontWeight: 700,
               letterSpacing: '-0.025em',
               color: 'var(--fg)',
               lineHeight: 1.15,
+              textWrap: 'balance',
             }}
           >
             {t('auth.art.title')}
             <br />
-            <span style={{ color: 'var(--fg-muted)' }}>{t('auth.art.subtitle')}</span>
+            <span style={{ color: 'var(--brand-500)' }}>{t('auth.art.subtitle')}</span>
           </div>
-          <div style={{ marginTop: 12, fontSize: 13.5, color: 'var(--fg-muted)', lineHeight: 1.6 }}>
+          <div style={{ marginTop: 14, fontSize: 14, color: 'var(--fg-muted)', lineHeight: 1.6, maxWidth: 360, marginLeft: 'auto', marginRight: 'auto' }}>
             {t('auth.art.body')}
+          </div>
+          <div className="auth-art-chips">
+            <span className="auth-art-chip"><span className="ico"><Icon name="qr" size={13} /></span> QR pairing</span>
+            <span className="auth-art-chip"><span className="ico"><Icon name="sparkles" size={13} /></span> AI agents</span>
+            <span className="auth-art-chip"><span className="pulse" /> Realtime</span>
+            <span className="auth-art-chip"><span className="ico"><Icon name="webhook" size={13} /></span> Webhooks</span>
           </div>
         </div>
       </div>

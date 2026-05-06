@@ -1310,56 +1310,127 @@ select {
   font-family: var(--font-mono);
 }
 
-/* ================ Auth screens ================ */
+/* ================ Auth screens — aligned with landing identity ================ */
 .auth {
   min-height: 100vh;
   display: grid;
   grid-template-columns: 1fr 1fr;
   background: var(--bg);
+  position: relative;
+  overflow: hidden;
+}
+/* Ambient green glow on the form side — mirrors landing's aurora subtly */
+.auth::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 600px 400px at 0% 0%, color-mix(in srgb, var(--brand-500) 10%, transparent), transparent 60%),
+    radial-gradient(ellipse 500px 400px at 0% 100%, color-mix(in srgb, var(--accent-2) 8%, transparent), transparent 60%);
+  pointer-events: none;
+  z-index: 0;
 }
 @media (max-width: 880px) {
-  .auth {
-    grid-template-columns: 1fr;
-  }
-  .auth-art {
-    display: none;
-  }
+  .auth { grid-template-columns: 1fr; }
+  .auth-art { display: none; }
 }
+
 .auth-form {
+  position: relative; z-index: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   padding: 60px;
-  max-width: 480px;
+  max-width: 460px;
   width: 100%;
   margin: 0 auto;
 }
+
 .auth-art {
-  background:
-    radial-gradient(circle at 25% 20%, color-mix(in srgb, var(--brand-500) 22%, transparent), transparent 55%),
-    radial-gradient(circle at 75% 75%, color-mix(in srgb, var(--accent-2) 18%, transparent), transparent 55%),
-    var(--bg-subtle);
-  border-left: 1px solid var(--border);
   position: relative;
   overflow: hidden;
   display: grid;
   place-items: center;
   padding: 60px;
+  background: linear-gradient(180deg, #0a0d15 0%, #06080f 100%);
+  border-left: 1px solid color-mix(in srgb, var(--brand-500) 14%, var(--border));
 }
+[data-theme='light'] .auth-art {
+  background: linear-gradient(180deg, #fafafa 0%, #ffffff 100%);
+  border-left: 1px solid var(--border);
+}
+.auth-art::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 25% 20%, color-mix(in srgb, var(--brand-500) 22%, transparent), transparent 55%),
+    radial-gradient(circle at 75% 80%, color-mix(in srgb, var(--accent-2) 18%, transparent), transparent 55%);
+  pointer-events: none;
+}
+/* Subtle starfield — only visible in dark mode like the landing */
+[data-theme='dark'] .auth-art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.4) 0.5px, transparent 1px),
+    radial-gradient(circle, rgba(255, 255, 255, 0.25) 0.5px, transparent 1px);
+  background-size: 240px 240px, 160px 160px;
+  background-position: 0 0, 80px 120px;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
 .auth h1 {
-  font-size: 28px;
-  margin: 0 0 8px;
+  font-size: clamp(28px, 3vw, 34px);
+  margin: 0 0 10px;
   letter-spacing: -0.025em;
   font-weight: 600;
+  line-height: 1.1;
 }
 .auth .lead {
   color: var(--fg-muted);
   margin-bottom: 32px;
-  font-size: 14px;
+  font-size: 14.5px;
+  line-height: 1.5;
 }
+
+/* Stronger focus ring with brand green */
+.auth .input {
+  background: color-mix(in srgb, var(--fg) 3%, var(--bg));
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  transition: border-color .15s, box-shadow .15s, background .15s;
+}
+.auth .input:focus {
+  outline: none;
+  border-color: var(--brand-500);
+  background: var(--bg);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-500) 18%, transparent);
+}
+
+/* Make the form's primary CTA match landing's btn-green pill */
+.auth-form .btn-brand {
+  border-radius: 999px;
+  padding: 13px 26px;
+  font-size: 15px;
+  font-weight: 600;
+  background: var(--brand-500);
+  color: #0a0a0b;
+  border: none;
+  box-shadow: 0 0 28px color-mix(in srgb, var(--brand-500) 32%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: transform .15s, box-shadow .15s, background .15s;
+}
+.auth-form .btn-brand:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: var(--brand-400);
+  box-shadow: 0 0 36px color-mix(in srgb, var(--brand-500) 50%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
 .auth .alt {
-  margin-top: 20px;
-  font-size: 13px;
+  margin-top: 22px;
+  font-size: 13.5px;
   color: var(--fg-muted);
   text-align: center;
 }
@@ -1420,8 +1491,82 @@ select {
     linear-gradient(var(--border-subtle) 1px, transparent 1px),
     linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px);
   background-size: 32px 32px;
-  opacity: 0.5;
+  opacity: 0.4;
   mask-image: radial-gradient(circle at 50% 50%, black 30%, transparent 70%);
+}
+
+/* Floating toolbar (theme + locale) anchored top-right of the auth screen */
+.auth-toolbar {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  z-index: 10;
+  display: flex;
+  gap: 6px;
+}
+.auth-tool-btn {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-elevated) 70%, transparent);
+  backdrop-filter: blur(8px);
+  color: var(--fg-muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.auth-tool-btn:hover {
+  color: var(--fg);
+  border-color: color-mix(in srgb, var(--brand-500) 40%, var(--border));
+  background: var(--bg-elevated);
+}
+.auth-tool-locale {
+  width: auto;
+  padding: 0 12px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+}
+
+/* Polished stat chips on the auth art panel */
+.auth-art-chips {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 28px;
+}
+.auth-art-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: color-mix(in srgb, var(--bg-elevated) 80%, transparent);
+  backdrop-filter: blur(8px);
+  border: 1px solid color-mix(in srgb, var(--brand-500) 24%, var(--border));
+  border-radius: 999px;
+  font-size: 12.5px;
+  color: var(--fg);
+  font-weight: 500;
+}
+.auth-art-chip .ico {
+  color: var(--brand-500);
+  display: flex;
+}
+.auth-art-chip .pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--brand-500);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--brand-500) 60%, transparent);
+  animation: authPulse 2s ease-out infinite;
+}
+@keyframes authPulse {
+  0%, 100% { box-shadow: 0 0 6px color-mix(in srgb, var(--brand-500) 40%, transparent); }
+  50% { box-shadow: 0 0 14px var(--brand-500); }
 }
 
 /* ================ Logs ================ */
