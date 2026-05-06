@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Icon, type IconName } from '@shared/UI/components/Icon';
 import { Topbar } from '@shared/UI/components/Topbar';
 import { useI18n } from '@shared/i18n/I18nProvider';
-import { useCurrentUser } from '@acceso/usuarios/Application/useCurrentUser';
+import { useCurrentUser, displayNameOf } from '@acceso/usuarios/Application/useCurrentUser';
 import { RepositoryConnectionImpl } from '@wsp/connections/Infrastructure/RepositoryImpl';
 import type { IConnection } from '@wsp/connections/Domain/IConnection';
 
@@ -29,7 +29,7 @@ export const DashboardScreen = () => {
   const total = connections?.length ?? 0;
   const connected = connections?.filter((c) => c.state === 'connected').length ?? 0;
 
-  const displayName = user?.display_name?.trim() || user?.email?.split('@')[0] || '';
+  const displayName = displayNameOf(user) || user?.email?.split('@')[0] || '';
   const welcomeText = displayName
     ? t('dashboard.welcome').replace('{name}', displayName)
     : t('dashboard.welcomeFallback');

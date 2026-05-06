@@ -6,7 +6,7 @@ import type { IApiKey, IApiKeyCreated } from '../Domain/IApiKey';
 
 const repo = new RepositoryApiKeyImpl();
 
-const formatDate = (iso?: string | null): string => {
+const formatDate = (iso?: string | Date | null): string => {
   if (!iso) return '—';
   try {
     const d = new Date(iso);
@@ -207,7 +207,7 @@ export const ApiKeysScreen = () => {
           )}
 
           {keys.map((k) => {
-            const revoked = !!k.revoked_at;
+            const revoked = k.estado === false || !!k.eliminar;
             const busy = revokeBusy === k.id;
             return (
               <div
@@ -217,7 +217,7 @@ export const ApiKeysScreen = () => {
               >
                 <div className="bot-meta" style={{ minWidth: 0 }}>
                   <span className="n">{k.name}</span>
-                  <span className="num">creada {formatDate(k.created_at)}</span>
+                  <span className="num">creada {formatDate(k.registrar?.fecha)}</span>
                 </div>
                 <div className="mono" style={{ fontSize: 12.5, color: 'var(--fg-muted)' }}>
                   {k.prefix}…

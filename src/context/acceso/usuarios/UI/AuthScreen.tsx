@@ -19,8 +19,10 @@ export const AuthScreen = ({ mode }: Props) => {
   const { loading, error, login, signUp } = useUsuario();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
-  const [workspaceName, setWorkspaceName] = useState('');
+  const [username, setUsername] = useState('');
+  const [nombres, setNombres] = useState('');
+  const [primerApellido, setPrimerApellido] = useState('');
+  const [segundoApellido, setSegundoApellido] = useState('');
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +31,14 @@ export const AuthScreen = ({ mode }: Props) => {
         await login({ email, password });
         router.push('/connect');
       } else {
-        await signUp({ email, password, displayName: displayName || email.split('@')[0], workspaceName });
+        await signUp({
+          username: (username || email.split('@')[0]).trim(),
+          email,
+          password,
+          nombres: nombres.trim(),
+          primerApellido: primerApellido.trim(),
+          segundoApellido: segundoApellido.trim(),
+        });
         await login({ email, password });
         router.push('/connect');
       }
@@ -101,27 +110,59 @@ export const AuthScreen = ({ mode }: Props) => {
           {mode === 'signup' && (
             <>
               <div className="field">
-                <label className="label" htmlFor="displayName">
-                  {t('auth.displayName')}
+                <label className="label" htmlFor="username">
+                  {t('auth.username') ?? 'Usuario'}
                 </label>
                 <input
-                  id="displayName"
+                  id="username"
                   className="input"
-                  placeholder="Diego Salinas"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="diego.salinas"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  autoComplete="username"
+                  maxLength={50}
+                  required
                 />
               </div>
               <div className="field">
-                <label className="label" htmlFor="workspace">
-                  {t('auth.workspace')}
+                <label className="label" htmlFor="nombres">
+                  {t('auth.nombres') ?? 'Nombres'}
                 </label>
                 <input
-                  id="workspace"
+                  id="nombres"
                   className="input"
-                  placeholder="Acme"
-                  value={workspaceName}
-                  onChange={(e) => setWorkspaceName(e.target.value)}
+                  placeholder="Diego"
+                  value={nombres}
+                  onChange={(e) => setNombres(e.target.value)}
+                  maxLength={100}
+                  required
+                />
+              </div>
+              <div className="field">
+                <label className="label" htmlFor="primerApellido">
+                  {t('auth.primerApellido') ?? 'Primer apellido'}
+                </label>
+                <input
+                  id="primerApellido"
+                  className="input"
+                  placeholder="Salinas"
+                  value={primerApellido}
+                  onChange={(e) => setPrimerApellido(e.target.value)}
+                  maxLength={100}
+                  required
+                />
+              </div>
+              <div className="field">
+                <label className="label" htmlFor="segundoApellido">
+                  {t('auth.segundoApellido') ?? 'Segundo apellido'}
+                </label>
+                <input
+                  id="segundoApellido"
+                  className="input"
+                  placeholder="Pérez"
+                  value={segundoApellido}
+                  onChange={(e) => setSegundoApellido(e.target.value)}
+                  maxLength={100}
                 />
               </div>
             </>

@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Icon, type IconName } from './Icon';
 import { Logo } from './Logo';
 import { useI18n } from '@shared/i18n/I18nProvider';
-import { useCurrentUser, initialsOf } from '@acceso/usuarios/Application/useCurrentUser';
+import { useCurrentUser, initialsOf, displayNameOf } from '@acceso/usuarios/Application/useCurrentUser';
 import { useUsuario } from '@acceso/usuarios/Application/useUsuario';
 
 interface NavItem {
@@ -152,7 +152,7 @@ export const Sidebar = () => {
               className="name"
               style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
             >
-              {user?.display_name ?? user?.email ?? '—'}
+              {displayNameOf(user) || '—'}
             </span>
             <span
               className="org"

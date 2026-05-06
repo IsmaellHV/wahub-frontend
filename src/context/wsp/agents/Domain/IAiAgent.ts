@@ -1,8 +1,11 @@
+import type { IAuditFields } from '@shared/Domain/ILogDocument';
+
 export type AiProvider = 'openai' | 'anthropic' | 'custom';
 
-export interface IAiAgent {
+export interface IAiAgent extends IAuditFields {
   id: number;
-  usuario_id: number;
+  _id?: string | null;
+  usuario_id: string;
   connection_id?: number | null;
   name: string;
   provider: AiProvider;
@@ -13,8 +16,6 @@ export interface IAiAgent {
   max_tokens?: number | null;
   enabled: boolean;
   api_key?: string | null;
-  created_at?: string | null;
-  updated_at?: string | null;
 }
 
 export interface ISaveAgentInput {

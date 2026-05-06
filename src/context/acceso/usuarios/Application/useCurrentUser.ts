@@ -43,10 +43,19 @@ export const broadcastUserChanged = () => {
   window.dispatchEvent(new Event(EVENT));
 };
 
+// Full display name from nombres + primerApellido (fallback to username/email).
+export const displayNameOf = (u: IUsuario | null): string => {
+  if (!u) return '';
+  const nombres = (u.nombres ?? '').trim();
+  const apellido = (u.primerApellido ?? '').trim();
+  const full = [nombres, apellido].filter(Boolean).join(' ').trim();
+  return full || u.username || u.email || '';
+};
+
 // Helpers
 export const initialsOf = (u: IUsuario | null): string => {
   if (!u) return '?';
-  const name = (u.display_name ?? u.email ?? '').trim();
+  const name = (displayNameOf(u) || u.email || '').trim();
   if (!name) return '?';
   const parts = name.split(/\s+/).filter(Boolean);
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();

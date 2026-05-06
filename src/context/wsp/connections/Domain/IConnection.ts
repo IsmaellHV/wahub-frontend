@@ -1,7 +1,11 @@
+import type { IAuditFields } from '@shared/Domain/ILogDocument';
+
 export type ConnectionState = 'idle' | 'scanning' | 'revision' | 'connecting' | 'connected' | 'disconnected';
 
-export interface IConnection {
+export interface IConnection extends IAuditFields {
   id: number;
+  _id?: string | null;
+  usuario_id?: string;
   code?: string | null;
   session_id: string;
   name: string;
@@ -11,8 +15,6 @@ export interface IConnection {
   qr_attempts?: number;
   qr_attempts_revision?: number;
   last_seen?: string | null;
-  created_at?: string | null;
-  updated_at?: string | null;
 }
 
 export type ConnectionEvent =

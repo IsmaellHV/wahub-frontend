@@ -44,7 +44,7 @@ const initialsOf = (name: string): string =>
     .join('')
     .toUpperCase() || 'WA';
 
-const formatDate = (iso?: string | null): string => {
+const formatDate = (iso?: string | Date | null): string => {
   if (!iso) return '—';
   try {
     return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' });
@@ -298,8 +298,8 @@ export const BotsListScreen = () => {
                     </>
                   )}
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--fg-muted)' }} title={c.created_at ?? ''}>
-                  {formatDate(c.created_at)}
+                <div style={{ fontSize: 12, color: 'var(--fg-muted)' }} title={c.registrar?.fecha ? String(c.registrar.fecha) : ''}>
+                  {formatDate(c.registrar?.fecha)}
                 </div>
                 <div className="metric-mini">
                   <div className="v mono">{labelOf(c.state)}</div>

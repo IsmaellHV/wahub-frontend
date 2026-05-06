@@ -10,7 +10,7 @@ import type { IMessage } from '../Domain/IMessage';
 const connRepo = new RepositoryConnectionImpl();
 const msgRepo = new RepositoryMessageImpl();
 
-const formatTime = (iso?: string | null): string => {
+const formatTime = (iso?: string | Date | null): string => {
   if (!iso) return '';
   try {
     return new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
@@ -268,7 +268,7 @@ export const SendMessageScreen = () => {
                     {m.error && (
                       <div style={{ fontSize: 11, color: 'var(--status-error)' }}>{m.error}</div>
                     )}
-                    <div style={{ fontSize: 11, color: 'var(--fg-faint)' }}>{formatTime(m.created_at)}</div>
+                    <div style={{ fontSize: 11, color: 'var(--fg-faint)' }}>{formatTime(m.registrar?.fecha)}</div>
                   </div>
                 ))}
             </div>

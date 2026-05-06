@@ -7,7 +7,7 @@ import { useI18n } from '@shared/i18n/I18nProvider';
 import { AdapterStorage, STORAGE_KEYS } from '@shared/Infrastructure/AdapterStorage';
 import { RepositoryUsuarioImpl } from '../Infrastructure/RepositoryImpl';
 import { useUsuario } from '../Application/useUsuario';
-import { broadcastUserChanged, initialsOf } from '../Application/useCurrentUser';
+import { broadcastUserChanged, displayNameOf, initialsOf } from '../Application/useCurrentUser';
 import type { IUsuario } from '../Domain/IUsuario';
 
 const repo = new RepositoryUsuarioImpl();
@@ -20,7 +20,10 @@ export const ProfileScreen = () => {
   const [loading, setLoading] = useState(true);
 
   // Profile form
-  const [displayName, setDisplayName] = useState('');
+  const [nombres, setNombres] = useState('');
+  const [primerApellido, setPrimerApellido] = useState('');
+  const [segundoApellido, setSegundoApellido] = useState('');
+  const [telefono, setTelefono] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileMsg, setProfileMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
 
@@ -33,12 +36,17 @@ export const ProfileScreen = () => {
 
   useEffect(() => {
     // Hydrate immediately from cache so the header isn't blank during the network roundtrip
+    const hydrate = (u: IUsuario) => {
+      setUser(u);
+      setNombres(u.nombres ?? '');
+      setPrimerApellido(u.primerApellido ?? '');
+      setSegundoApellido(u.segundoApellido ?? '');
+      setTelefono(u.telefono ?? '');
+    };
     const cached = AdapterStorage.get(STORAGE_KEYS.USER);
     if (cached) {
       try {
-        const u = JSON.parse(cached) as IUsuario;
-        setUser(u);
-        setDisplayName(u.display_name ?? '');
+        hydrate(JSON.parse(cached) as IUsuario);
       } catch {
         /* ignore */
       }
@@ -46,9 +54,7 @@ export const ProfileScreen = () => {
     repo
       .me()
       .then((u) => {
-        setUser(u);
-        setDisplayName(u.display_name ?? '');
-        // Sync cache with server truth
+        hydrate(u);
         AdapterStorage.set(STORAGE_KEYS.USER, JSON.stringify(u));
         broadcastUserChanged();
       })
@@ -61,11 +67,16 @@ export const ProfileScreen = () => {
   };
 
   const saveProfile = async () => {
-    if (!displayName.trim()) return;
+    if (!nombres.trim() || !primerApellido.trim()) return;
     setSavingProfile(true);
     setProfileMsg(null);
     try {
-      const updated = await repo.updateProfile({ display_name: displayName.trim() });
+      const updated = await repo.updateProfile({
+        nombres: nombres.trim(),
+        primerApellido: primerApellido.trim(),
+        segundoApellido: segundoApellido.trim(),
+        telefono: telefono.trim() || null,
+      });
       setUser(updated);
       AdapterStorage.set(STORAGE_KEYS.USER, JSON.stringify(updated));
       broadcastUserChanged();
@@ -120,7 +131,7 @@ export const ProfileScreen = () => {
               {initialsOf(user)}
             </div>
             <div>
-              <h1 style={{ marginBottom: 4 }}>{user?.display_name ?? t('profile.title')}</h1>
+              <h1 style={{ marginBottom: 4 }}>{displayNameOf(user) || t('profile.title')}</h1>
               <div className="sub">{user?.email ?? t('profile.subtitle')}</div>
             </div>
           </div>
@@ -144,12 +155,36 @@ export const ProfileScreen = () => {
                 <FieldLabel>{t('profile.changeEmail')}</FieldLabel>
                 <input className="input" value={user?.email ?? ''} disabled style={{ opacity: 0.6 }} />
 
-                <FieldLabel>{t('profile.changeName')}</FieldLabel>
+                <FieldLabel>{t('profile.nombres') ?? 'Nombres'}</FieldLabel>
                 <input
                   className="input"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  maxLength={255}
+                  value={nombres}
+                  onChange={(e) => setNombres(e.target.value)}
+                  maxLength={100}
+                />
+
+                <FieldLabel>{t('profile.primerApellido') ?? 'Primer apellido'}</FieldLabel>
+                <input
+                  className="input"
+                  value={primerApellido}
+                  onChange={(e) => setPrimerApellido(e.target.value)}
+                  maxLength={100}
+                />
+
+                <FieldLabel>{t('profile.segundoApellido') ?? 'Segundo apellido'}</FieldLabel>
+                <input
+                  className="input"
+                  value={segundoApellido}
+                  onChange={(e) => setSegundoApellido(e.target.value)}
+                  maxLength={100}
+                />
+
+                <FieldLabel>{t('profile.telefono') ?? 'Teléfono'}</FieldLabel>
+                <input
+                  className="input"
+                  value={telefono}
+                  onChange={(e) => setTelefono(e.target.value)}
+                  maxLength={30}
                 />
 
                 <FieldLabel>{t('profile.language')}</FieldLabel>
@@ -165,7 +200,7 @@ export const ProfileScreen = () => {
                 {profileMsg && <Banner type={profileMsg.type}>{profileMsg.text}</Banner>}
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <button className="btn btn-brand" onClick={saveProfile} disabled={savingProfile || !displayName.trim()}>
+                  <button className="btn btn-brand" onClick={saveProfile} disabled={savingProfile || !nombres.trim() || !primerApellido.trim()}>
                     <Icon name="check" size={14} /> {t('profile.saveChanges')}
                   </button>
                 </div>

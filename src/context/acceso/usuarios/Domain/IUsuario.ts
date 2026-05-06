@@ -1,10 +1,15 @@
-export interface IUsuario {
-  id: number;
+import type { IAuditFields } from '@shared/Domain/ILogDocument';
+
+export interface IUsuario extends IAuditFields {
+  _id?: string | null;
+  id?: number;
+  username: string;
+  primerApellido: string;
+  segundoApellido: string;
+  nombres: string;
   email: string;
-  display_name: string;
-  rol_id: number;
-  estado: number;
-  workspace_id?: number | null;
+  correo?: string;
+  telefono?: string | null;
 }
 
 export interface IAuthSession {
@@ -20,8 +25,18 @@ export interface IDtoLogin {
 }
 
 export interface IDtoSignUp {
+  username: string;
   email: string;
   password: string;
-  displayName: string;
-  workspaceName?: string;
+  nombres: string;
+  primerApellido: string;
+  segundoApellido: string;
+  telefono?: string | null;
+}
+
+export interface IDtoUpdateProfile {
+  nombres?: string;
+  primerApellido?: string;
+  segundoApellido?: string;
+  telefono?: string | null;
 }

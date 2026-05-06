@@ -1,3 +1,5 @@
+import type { IAuditFields } from '@shared/Domain/ILogDocument';
+
 export const WEBHOOK_EVENTS = [
   'message.received',
   'session.connected',
@@ -6,9 +8,10 @@ export const WEBHOOK_EVENTS = [
 
 export type WebhookEvent = (typeof WEBHOOK_EVENTS)[number];
 
-export interface IWebhook {
+export interface IWebhook extends IAuditFields {
   id: number;
-  usuario_id: number;
+  _id?: string | null;
+  usuario_id: string;
   name: string;
   url: string;
   secret: string;
@@ -17,8 +20,6 @@ export interface IWebhook {
   last_delivery_at?: string | null;
   last_status?: number | null;
   last_error?: string | null;
-  created_at?: string;
-  updated_at?: string | null;
 }
 
 export interface ISaveWebhookInput {
