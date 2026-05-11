@@ -49,7 +49,7 @@ export const BotDetailScreen = ({ botId }: Props) => {
 
   return (
     <>
-      <Topbar crumbs={['Bots', b.name]} />
+      <Topbar crumbs={['Conexiones', b.name]} />
       <div className="page fade-in">
         <div className="page-h">
           <Link href="/bots" className="icon-btn" style={{ marginRight: 4 }}>
@@ -134,7 +134,7 @@ export const BotDetailScreen = ({ botId }: Props) => {
               </div>
               <div className="card-body">
                 <div className="field">
-                  <label className="label">Bot name</label>
+                  <label className="label">Connection name</label>
                   <input className="input" defaultValue={b.name} />
                 </div>
                 <div className="field">

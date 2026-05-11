@@ -9,16 +9,14 @@ export interface ApiError {
 
 interface ApiOptions extends Omit<RequestInit, 'body'> {
   body?: unknown;
-  auth?: boolean;       // attach Bearer access token (default true)
-  _retry?: boolean;     // internal: marks a request that already passed through refresh once
+  auth?: boolean;
+  _retry?: boolean;
 }
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7001/api/wahub').replace(/\/$/, '');
 
 const REFRESH_PATH = '/acceso/token/refresh';
 
-// Custom event broadcast on refresh failure / forced logout. Listened to by a small
-// AuthGate component which clears storage and routes the user to /login.
 export const AUTH_LOGOUT_EVENT = 'wahub:auth-logout';
 
 const dispatchLogout = (reason: 'refresh-failed' | 'no-refresh-token' | 'manual'): void => {
@@ -26,9 +24,11 @@ const dispatchLogout = (reason: 'refresh-failed' | 'no-refresh-token' | 'manual'
   window.dispatchEvent(new CustomEvent(AUTH_LOGOUT_EVENT, { detail: { reason } }));
 };
 
-const buildHeaders = (auth: boolean, init?: HeadersInit): Headers => {
+const buildHeaders = (auth: boolean, hasBody: boolean, init?: HeadersInit): Headers => {
   const headers = new Headers(init);
-  if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
+  // Solo set Content-Type cuando hay body. Fastify rechaza `Content-Type: application/json`
+  // con body vacío (ej. DELETE) con "Body cannot be empty when content-type is set to 'application/json'".
+  if (hasBody && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
   if (auth) {
     const token = AdapterStorage.get(STORAGE_KEYS.ACCESS_TOKEN);
     if (token) headers.set('Authorization', `Bearer ${token}`);
@@ -36,8 +36,6 @@ const buildHeaders = (auth: boolean, init?: HeadersInit): Headers => {
   return headers;
 };
 
-// Single in-flight refresh promise. All requests that hit 401 simultaneously wait
-// on this same promise instead of each firing their own refresh.
 let refreshInFlight: Promise<boolean> | null = null;
 
 const refreshAccessToken = async (): Promise<boolean> => {
@@ -72,7 +70,6 @@ const refreshAccessToken = async (): Promise<boolean> => {
       dispatchLogout('refresh-failed');
       return false;
     } finally {
-      // Reset so the NEXT 401 (long after this one) can refresh again.
       refreshInFlight = null;
     }
   })();
@@ -80,14 +77,13 @@ const refreshAccessToken = async (): Promise<boolean> => {
   return refreshInFlight;
 };
 
-// Lightweight fetch wrapper — JSON in/out, attaches JWT, auto-refreshes on 401, throws ApiError otherwise.
 export const AdapterApi = {
   async request<T>(path: string, opts: ApiOptions = {}): Promise<T> {
     const { body, auth = true, headers, _retry = false, ...rest } = opts;
     const url = path.startsWith('http') ? path : `${API_URL}${path.startsWith('/') ? path : '/' + path}`;
     const res = await fetch(url, {
       ...rest,
-      headers: buildHeaders(auth, headers),
+      headers: buildHeaders(auth, body !== undefined, headers),
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
 
@@ -101,20 +97,14 @@ export const AdapterApi = {
       }
     }
 
-    // 401: try one refresh + retry. Skip when:
-    //   - the original call was unauthenticated (auth=false)
-    //   - we already retried this request (avoid infinite loop)
-    //   - the failing call IS the refresh endpoint itself
     if (res.status === 401 && auth && !_retry && !path.endsWith(REFRESH_PATH)) {
       const refreshed = await refreshAccessToken();
       if (refreshed) {
         return this.request<T>(path, { ...opts, _retry: true });
       }
-      // Refresh failed → fall through, throw ApiError below; AuthGate already kicked in.
     }
 
     if (!res.ok) {
-      // Backend DomainExceptionFilter shape: { error, errorClient, errorCode, message, cause }
       const obj = (json && typeof json === 'object' ? (json as Record<string, unknown>) : {}) as Record<string, unknown>;
       const pick = (k: string): string | null => (typeof obj[k] === 'string' ? (obj[k] as string) : null);
       const message = pick('errorClient') || pick('message') || res.statusText || 'Request failed';
@@ -141,7 +131,6 @@ export const AdapterApi = {
     return this.request<T>(path, { ...opts, method: 'DELETE' });
   },
 
-  // Manual logout broadcast — useful for the user-initiated logout button.
   triggerLogout() {
     dispatchLogout('manual');
   },

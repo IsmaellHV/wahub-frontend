@@ -2,17 +2,27 @@ import { AdapterApi } from '@shared/Infrastructure/AdapterApi';
 import { AdapterConfigure } from './AdapterConfigure';
 import type { IAiAgent, ISaveAgentInput } from '../Domain/IAiAgent';
 
+// Backend renombró la PK numérica a `i` (Phase 3). Frontend aún usa `id`
+// en su modelo de dominio — normalizamos en el boundary.
+const normalize = <T extends Record<string, unknown>>(row: T): T & { id: number } => {
+  const { i, ...rest } = row as { i?: number } & Record<string, unknown>;
+  return { ...(rest as T), id: (rest as { id?: number }).id ?? i ?? 0 } as T & { id: number };
+};
+
 export class RepositoryAiAgentImpl {
-  list(): Promise<IAiAgent[]> {
-    return AdapterApi.get<IAiAgent[]>(AdapterConfigure.ENDPOINT.LIST);
+  async list(): Promise<IAiAgent[]> {
+    const rows = await AdapterApi.get<Array<Record<string, unknown>>>(AdapterConfigure.ENDPOINT.LIST);
+    return rows.map(r => normalize(r) as unknown as IAiAgent);
   }
 
-  create(input: ISaveAgentInput): Promise<IAiAgent> {
-    return AdapterApi.post<IAiAgent>(AdapterConfigure.ENDPOINT.CREATE, input);
+  async create(input: ISaveAgentInput): Promise<IAiAgent> {
+    const row = await AdapterApi.post<Record<string, unknown>>(AdapterConfigure.ENDPOINT.CREATE, input);
+    return normalize(row) as unknown as IAiAgent;
   }
 
-  update(id: number, input: ISaveAgentInput): Promise<IAiAgent> {
-    return AdapterApi.put<IAiAgent>(AdapterConfigure.ENDPOINT.UPDATE(id), input);
+  async update(id: number, input: ISaveAgentInput): Promise<IAiAgent> {
+    const row = await AdapterApi.put<Record<string, unknown>>(AdapterConfigure.ENDPOINT.UPDATE(id), input);
+    return normalize(row) as unknown as IAiAgent;
   }
 
   remove(id: number): Promise<{ ok: boolean }> {

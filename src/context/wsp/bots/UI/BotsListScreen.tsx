@@ -379,7 +379,7 @@ export const BotsListScreen = () => {
                 {/* Confirm disconnect */}
                 {confirmDisconnectId === c.id && (
                   <ConfirmInline
-                    title="Desconectar bot?"
+                    title="¿Desconectar conexión?"
                     message="Se cierra la sesión de WhatsApp. Puedes volver a enlazarlo después con el mismo nombre."
                     cta="Disconnect"
                     busy={busy}
@@ -389,7 +389,7 @@ export const BotsListScreen = () => {
                 )}
                 {confirmDeleteId === c.id && (
                   <ConfirmInline
-                    title="Eliminar bot?"
+                    title="¿Eliminar conexión?"
                     message="Borra la sesión y todos sus mensajes. No se puede deshacer."
                     cta="Delete"
                     danger

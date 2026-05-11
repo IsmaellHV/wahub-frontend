@@ -9,7 +9,7 @@ import { useConnectionRealtime } from '../Application/useConnectionRealtime';
 import type { IConnection } from '../Domain/IConnection';
 
 const repo = new RepositoryConnectionImpl();
-const QR_TTL = 60; // seconds
+const QR_TTL = 60;
 
 export const ConnectScreen = () => {
   const [conn, setConn] = useState<IConnection | null>(null);
@@ -18,23 +18,19 @@ export const ConnectScreen = () => {
   const [seconds, setSeconds] = useState(QR_TTL);
   const [botName, setBotName] = useState('');
   const [nameError, setNameError] = useState<string | null>(null);
-  // Pre-existing online bots — surface them so user knows there's already one paired
-  // instead of being silently auto-attached. Multi-bot is fully supported.
   const [existingOnline, setExistingOnline] = useState<IConnection[]>([]);
 
   const realtime = useConnectionRealtime({ connectionId: conn?.id ?? null, initial: conn });
   const state = realtime.state;
   const qrDataUrl = realtime.qr;
 
-  // Validate name. Backend caps at 64 chars.
   const validateName = (raw: string): string | null => {
     const trimmed = raw.trim();
-    if (!trimmed) return 'Pon un nombre para identificar el bot';
+    if (!trimmed) return 'Pon un nombre para identificar la conexión';
     if (trimmed.length > 64) return 'Máximo 64 caracteres';
     return null;
   };
 
-  // On mount: surface bots that are already online so user can decide whether to add another.
   useEffect(() => {
     let alive = true;
     repo
@@ -49,8 +45,6 @@ export const ConnectScreen = () => {
     };
   }, []);
 
-  // Start: requires a name. Reuses ONLY in-flight (scanning/revision/connecting) sessions.
-  // Already-`connected` rows are NOT auto-attached — user sees them in the existingOnline panel.
   const start = useCallback(async () => {
     const err = validateName(botName);
     if (err) {
@@ -62,7 +56,6 @@ export const ConnectScreen = () => {
     setCreateError(null);
     try {
       const list = await repo.list();
-      // Reusable = something the user can finish pairing right now (NOT already-connected ones).
       const inFlight = list.find((c) => c.state === 'scanning' || c.state === 'revision' || c.state === 'connecting');
       if (inFlight) {
         setConn(inFlight);
@@ -78,7 +71,6 @@ export const ConnectScreen = () => {
     }
   }, [botName]);
 
-  // Countdown only while scanning/revision. Reset whenever a new QR arrives.
   useEffect(() => {
     if (state !== 'scanning' && state !== 'revision') return;
     const i = setInterval(() => setSeconds((s) => Math.max(0, s - 1)), 1000);
@@ -89,8 +81,6 @@ export const ConnectScreen = () => {
     if (qrDataUrl) setSeconds(QR_TTL);
   }, [qrDataUrl]);
 
-  // Regenerate: backend restarts wwebjs on SAME row + resets counters.
-  // No DELETE+POST → no orphan auth folders.
   const regenerate = useCallback(async () => {
     if (busy || !conn) return;
     setBusy(true);
@@ -106,9 +96,6 @@ export const ConnectScreen = () => {
     }
   }, [busy, conn]);
 
-  // Auto-regenerate when QR expires (countdown hits 0 while still scanning/revision).
-  // Hard guards: must be scanning/revision AND have an actual qr loaded — otherwise we
-  // could storm the backend on a stale local state that never received WS updates.
   useEffect(() => {
     if (busy) return;
     if (state !== 'scanning' && state !== 'revision') return;
@@ -121,14 +108,12 @@ export const ConnectScreen = () => {
 
   return (
     <>
-      <Topbar crumbs={['Bots', 'Connect']} />
+      <Topbar crumbs={['Conexiones', 'Conectar']} />
       <div className="page page-narrow fade-in">
         <div className="page-h">
           <div>
             <h1>Connect a WhatsApp number</h1>
-            <div className="sub">
-              Scan the QR code with WhatsApp on the phone you want to use as a bot. The connection runs through your own session — we never store your messages.
-            </div>
+            <div className="sub">Scan the QR code with WhatsApp on the phone you want to use as a connection. The connection runs through your own session — we never store your messages.</div>
           </div>
           <div className="actions">
             {conn && (
@@ -155,15 +140,11 @@ export const ConnectScreen = () => {
           >
             <span className="dot dot-online pulse" style={{ flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
-              <div style={{ color: 'var(--fg)', fontWeight: 550 }}>
-                {existingOnline.length === 1 ? '1 bot ya conectado' : `${existingOnline.length} bots ya conectados`} · puedes agregar otro abajo
-              </div>
-              <div style={{ color: 'var(--fg-muted)', fontSize: 12, marginTop: 2 }}>
-                {existingOnline.map((c) => `${c.name}${c.number ? ` (${c.number})` : ''}`).join(' · ')}
-              </div>
+              <div style={{ color: 'var(--fg)', fontWeight: 550 }}>{existingOnline.length === 1 ? '1 conexión ya activa' : `${existingOnline.length} conexiones ya activas`} · puedes agregar otra abajo</div>
+              <div style={{ color: 'var(--fg-muted)', fontSize: 12, marginTop: 2 }}>{existingOnline.map((c) => `${c.name}${c.number ? ` (${c.number})` : ''}`).join(' · ')}</div>
             </div>
             <Link href="/bots" className="btn btn-secondary btn-sm">
-              Ver bots
+              Ver conexiones
             </Link>
           </div>
         )}
@@ -243,9 +224,7 @@ export const ConnectScreen = () => {
                     <Icon name="qr" size={28} />
                   </div>
                   <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--fg)', letterSpacing: '-0.01em' }}>Name your bot</div>
-                  <div style={{ fontSize: 12, color: 'var(--fg-muted)', marginTop: 4, marginBottom: 14, maxWidth: 240, textAlign: 'center' }}>
-                    Pick a label so you can identify this WhatsApp session later.
-                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--fg-muted)', marginTop: 4, marginBottom: 14, maxWidth: 240, textAlign: 'center' }}>Pick a label so you can identify this WhatsApp session later.</div>
                   <div style={{ width: '100%', maxWidth: 240, display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <input
                       className="input"
@@ -262,9 +241,7 @@ export const ConnectScreen = () => {
                       maxLength={64}
                       style={{ textAlign: 'center', fontWeight: 500 }}
                     />
-                    {nameError && (
-                      <div style={{ fontSize: 11.5, color: 'var(--status-error)', textAlign: 'center' }}>{nameError}</div>
-                    )}
+                    {nameError && <div style={{ fontSize: 11.5, color: 'var(--status-error)', textAlign: 'center' }}>{nameError}</div>}
                     <button className="btn btn-brand" onClick={start} disabled={!botName.trim()}>
                       <Icon name="qr" size={14} /> Generate QR
                     </button>
@@ -274,10 +251,7 @@ export const ConnectScreen = () => {
 
               {/* Spinner while POST in flight */}
               {!conn && busy && (
-                <div
-                  className="qr-overlay"
-                  style={{ background: 'color-mix(in srgb, var(--bg-elevated) 96%, transparent)' }}
-                >
+                <div className="qr-overlay" style={{ background: 'color-mix(in srgb, var(--bg-elevated) 96%, transparent)' }}>
                   <div className="qr-spinner" />
                   <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--fg)' }}>Starting session…</div>
                   <div style={{ fontSize: 12, color: 'var(--fg-muted)', marginTop: 4 }}>Booting WhatsApp client</div>
@@ -299,17 +273,9 @@ export const ConnectScreen = () => {
                   <div className="qr-success">
                     <Icon name="check" size={28} stroke={2.5} />
                   </div>
-                  <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--fg)', letterSpacing: '-0.01em' }}>
-                    ¡Listo! Bot enlazado
-                  </div>
-                  <div style={{ fontSize: 12.5, color: 'var(--fg-muted)', marginTop: 6, maxWidth: 240, textAlign: 'center' }}>
-                    Ya puedes enviar y recibir mensajes desde este número.
-                  </div>
-                  {(realtime.number ?? conn?.number) && (
-                    <div style={{ fontSize: 12, color: 'var(--fg-muted)', marginTop: 8, fontFamily: 'var(--font-mono)' }}>
-                      {realtime.number ?? conn?.number}
-                    </div>
-                  )}
+                  <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--fg)', letterSpacing: '-0.01em' }}>¡Listo! Conexión enlazada</div>
+                  <div style={{ fontSize: 12.5, color: 'var(--fg-muted)', marginTop: 6, maxWidth: 240, textAlign: 'center' }}>Ya puedes enviar y recibir mensajes desde este número.</div>
+                  {(realtime.number ?? conn?.number) && <div style={{ fontSize: 12, color: 'var(--fg-muted)', marginTop: 8, fontFamily: 'var(--font-mono)' }}>{realtime.number ?? conn?.number}</div>}
                 </div>
               )}
             </div>
@@ -330,7 +296,7 @@ export const ConnectScreen = () => {
                   {state === 'connecting' && <>Establishing session…</>}
                   {state === 'connected' && (
                     <>
-                      <Icon name="check" size={14} stroke={2.5} style={{ color: 'var(--status-online)' }} /> Bot is now live
+                      <Icon name="check" size={14} stroke={2.5} style={{ color: 'var(--status-online)' }} /> Conexión activa
                     </>
                   )}
                 </div>
@@ -371,7 +337,7 @@ export const ConnectScreen = () => {
             {state === 'connected' && (
               <div style={{ marginTop: 32, display: 'flex', gap: 8, zIndex: 1 }}>
                 <Link href="/bots" className="btn btn-brand btn-lg">
-                  Configure bot <Icon name="arrow_right" size={14} />
+                  Configurar conexión <Icon name="arrow_right" size={14} />
                 </Link>
                 <button className="btn btn-secondary btn-lg" onClick={regenerate} disabled={busy}>
                   Connect another

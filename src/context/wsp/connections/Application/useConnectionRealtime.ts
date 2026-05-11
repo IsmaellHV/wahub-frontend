@@ -14,9 +14,6 @@ interface RealtimeState {
 
 interface UseRealtimeArgs {
   connectionId: number | null;
-  // Seed state from backend snapshot. Critical when subscribing to an already-`connected`
-  // session — wwebjs only emits NEW events, so without a seed the local state stays
-  // 'scanning' and triggers the auto-regenerate loop.
   initial?: Pick<IConnection, 'state' | 'number' | 'qr' | 'qr_attempts'> | null;
 }
 
@@ -29,14 +26,11 @@ const seedFrom = (initial: UseRealtimeArgs['initial']): RealtimeState => ({
   bucket: null,
 });
 
-// Subscribes to backend realtime channel for one connection.
-// Backend emits: qr → state(connecting) → state(connected) + messages.
 export const useConnectionRealtime = (args: UseRealtimeArgs): RealtimeState => {
   const { connectionId, initial } = args;
   const [state, setState] = useState<RealtimeState>(() => seedFrom(initial));
   const wsRef = useRef<WebSocket | null>(null);
 
-  // Re-seed when the underlying conn switches (new id) so we don't carry stale state.
   useEffect(() => {
     setState((s) => ({ ...seedFrom(initial), connected: s.connected }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -50,7 +44,9 @@ export const useConnectionRealtime = (args: UseRealtimeArgs): RealtimeState => {
     const channel = AdapterConfigure.WS.CHANNEL(connectionId);
 
     const connect = () => {
+      console.log('ws', AdapterConfigure.WS.URL);
       const ws = new WebSocket(AdapterConfigure.WS.URL);
+      console.log('ws', ws);
       wsRef.current = ws;
 
       ws.addEventListener('open', () => {
@@ -65,9 +61,6 @@ export const useConnectionRealtime = (args: UseRealtimeArgs): RealtimeState => {
           if (parsed.channel !== channel || !parsed.data) return;
           const ev = parsed.data as { type: string } & Record<string, unknown>;
           if (ev.type === 'snapshot') {
-            // Backend pushes current DB row right after subscribe.
-            // Snapshot is the source of truth — replace fields, do NOT fall back to local
-            // (that's how a stale qr from before survived a `connected` snapshot).
             const snapState = (ev.state as ConnectionState) ?? 'idle';
             const isPairing = snapState === 'scanning' || snapState === 'revision';
             setState((s) => ({

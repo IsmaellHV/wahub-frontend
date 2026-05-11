@@ -43,7 +43,7 @@ export const SendMessageScreen = () => {
         const firstOnline = list.find((c) => c.state === 'connected');
         if (firstOnline) setSelectedId(firstOnline.id);
       })
-      .catch((e) => alive && setError((e as { message?: string })?.message ?? 'Failed to load bots'))
+      .catch((e) => alive && setError((e as { message?: string })?.message ?? 'No se pudo cargar las conexiones'))
       .finally(() => alive && setLoadingConns(false));
     return () => {
       alive = false;
@@ -101,7 +101,7 @@ export const SendMessageScreen = () => {
         <div className="page-h">
           <div>
             <h1>Send a message</h1>
-            <div className="sub">Manually send a WhatsApp message through one of your connected bots.</div>
+            <div className="sub">Manually send a WhatsApp message through one of your active connections.</div>
           </div>
         </div>
 
@@ -143,7 +143,7 @@ export const SendMessageScreen = () => {
             <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 12, color: 'var(--fg-muted)', marginBottom: 6, fontWeight: 550 }}>
-                  Bot
+                  Conexión
                 </label>
                 {loadingConns ? (
                   <div style={{ fontSize: 13, color: 'var(--fg-muted)' }}>Loading…</div>
@@ -157,7 +157,7 @@ export const SendMessageScreen = () => {
                       border: '1px dashed var(--border)',
                     }}
                   >
-                    No bots are online. Connect one in <strong>Connect</strong> first.
+                    No hay conexiones activas. Conecta una en <strong>Connect</strong> primero.
                   </div>
                 ) : (
                   <select

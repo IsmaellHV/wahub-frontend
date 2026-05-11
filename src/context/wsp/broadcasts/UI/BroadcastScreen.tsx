@@ -47,7 +47,7 @@ export const BroadcastScreen = () => {
               </div>
               <div className="card-body">
                 <div className="field">
-                  <label className="label">Send from bot</label>
+                  <label className="label">Send from connection</label>
                   <select className="input">
                     <option>Lunaría Boutique · +52 81 9988 1122</option>
                     <option>Acme Support · +52 55 1234 5678</option>
