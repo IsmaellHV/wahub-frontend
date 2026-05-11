@@ -175,6 +175,10 @@ export const es: Dict = {
   auth: {
     email: 'Correo',
     password: 'Contraseña',
+    username: 'Usuario',
+    nombres: 'Nombres',
+    primerApellido: 'Primer apellido',
+    segundoApellido: 'Segundo apellido',
     displayName: 'Tu nombre',
     workspace: 'Workspace',
     noAccount: '¿No tienes cuenta?',

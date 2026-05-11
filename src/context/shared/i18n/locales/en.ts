@@ -173,6 +173,10 @@ export const en = {
   auth: {
     email: 'Email',
     password: 'Password',
+    username: 'Username',
+    nombres: 'First name',
+    primerApellido: 'Last name',
+    segundoApellido: 'Second last name',
     displayName: 'Your name',
     workspace: 'Workspace',
     noAccount: "Don't have an account?",
