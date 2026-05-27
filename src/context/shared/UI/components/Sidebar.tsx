@@ -21,10 +21,12 @@ const PRIMARY = (t: (k: string) => string): NavItem[] => [
   { href: '/dashboard', label: t('nav.dashboard'), icon: 'home' },
   { href: '/connect', label: t('nav.connect'), icon: 'qr' },
   { href: '/bots', label: t('nav.sessions'), icon: 'bot' },
-  { href: '/inbox', label: t('nav.inbox'), icon: 'chat', dot: true },
+  // TODO: re-habilitar cuando inbox tenga data real (hoy es mock)
+  // { href: '/inbox', label: t('nav.inbox'), icon: 'chat', dot: true },
   { href: '/messages', label: t('nav.sendMessage'), icon: 'send' },
   { href: '/agents', label: t('nav.aiAgents'), icon: 'sparkles', beta: true },
-  { href: '/broadcast', label: t('nav.broadcast'), icon: 'send' },
+  // TODO: re-habilitar cuando broadcast tenga data real (hoy es mock)
+  // { href: '/broadcast', label: t('nav.broadcast'), icon: 'send' },
   // TODO: implementar /contacts (no existe la pagina aun)
   // { href: '/contacts', label: t('nav.contacts'), icon: 'contacts' },
 ];
