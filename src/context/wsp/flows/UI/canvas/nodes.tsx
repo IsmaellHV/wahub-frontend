@@ -60,7 +60,7 @@ export const TriggerNode = ({ data, selected }: NodeProps & { data: FlowNodeData
           <div style={{ fontSize: 12, color: 'var(--fg)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{meta.preview}</div>
         </div>
       </div>
-      <Handle type="source" position={Position.Right} style={handleStyle} />
+      <Handle type="source" position={Position.Bottom} style={handleStyle} />
     </div>
   );
 };
@@ -75,7 +75,7 @@ export const StepNode = ({ data, selected }: NodeProps & { data: FlowNodeData })
         border: `1.5px solid ${selected ? 'var(--brand-500)' : 'var(--border)'}`,
       }}
     >
-      <Handle type="target" position={Position.Left} style={handleStyle} />
+      <Handle type="target" position={Position.Top} style={handleStyle} />
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{ display: 'inline-flex', padding: 6, borderRadius: 999, background: 'var(--bg)', color: 'var(--fg-muted)' }}>
           <Icon name={meta.icon} size={12} />
@@ -85,7 +85,7 @@ export const StepNode = ({ data, selected }: NodeProps & { data: FlowNodeData })
           <div style={{ fontSize: 12, color: 'var(--fg)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{meta.preview}</div>
         </div>
       </div>
-      <Handle type="source" position={Position.Right} style={handleStyle} />
+      <Handle type="source" position={Position.Bottom} style={handleStyle} />
     </div>
   );
 };

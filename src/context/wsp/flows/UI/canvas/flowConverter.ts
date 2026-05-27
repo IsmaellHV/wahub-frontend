@@ -13,9 +13,10 @@ export interface FlowNodeData extends Record<string, unknown> {
   payload: FlowTrigger | FlowStep;
 }
 
-const DEFAULT_X_TRIGGER = 80;
-const DEFAULT_X_STEP = 360;
-const Y_GAP = 140;
+// Layout vertical: triggers arriba, steps abajo en columna centrada.
+const DEFAULT_X = 200;
+const DEFAULT_Y_TRIGGER = 60;
+const Y_GAP = 120;
 
 const triggerNodeId = (i: number): string => `trigger-${i}`;
 const stepNodeId = (i: number): string => `step-${i}`;
@@ -24,11 +25,12 @@ const stepNodeId = (i: number): string => `step-${i}`;
 export function flowToNodes(input: ISaveFlowInput): Node<FlowNodeData>[] {
   const nodes: Node<FlowNodeData>[] = [];
 
+  const triggerCount = input.triggers.length;
   input.triggers.forEach((t, i) => {
     nodes.push({
       id: triggerNodeId(i),
       type: 'triggerNode',
-      position: t.position ?? { x: DEFAULT_X_TRIGGER, y: 80 + i * Y_GAP },
+      position: t.position ?? { x: DEFAULT_X, y: DEFAULT_Y_TRIGGER + i * Y_GAP },
       data: { kind: 'trigger', payload: t },
     });
   });
@@ -37,7 +39,7 @@ export function flowToNodes(input: ISaveFlowInput): Node<FlowNodeData>[] {
     nodes.push({
       id: stepNodeId(i),
       type: 'stepNode',
-      position: s.position ?? { x: DEFAULT_X_STEP, y: 80 + i * Y_GAP },
+      position: s.position ?? { x: DEFAULT_X, y: DEFAULT_Y_TRIGGER + (triggerCount + i) * Y_GAP },
       data: { kind: 'step', payload: s },
     });
   });
@@ -56,15 +58,17 @@ export function deriveEdges(nodes: Node<FlowNodeData>[]): Edge[] {
   const edges: Edge[] = [];
   if (stepNodes.length === 0) return edges;
 
-  // Conecta cada trigger al primer step.
+  // Conecta cada trigger al primer step. Smoothstep = right-angle, mas legible
+  // que bezier curvo cuando los nodos estan alineados verticalmente.
   const first = stepNodes[0];
   for (const t of triggerNodes) {
     edges.push({
       id: `${t.id}->${first.id}`,
       source: t.id,
       target: first.id,
+      type: 'smoothstep',
       animated: true,
-      style: { stroke: 'var(--brand-500)', strokeWidth: 1.5 },
+      style: { stroke: 'var(--brand-500)', strokeWidth: 2 },
     });
   }
 
@@ -76,7 +80,8 @@ export function deriveEdges(nodes: Node<FlowNodeData>[]): Edge[] {
       id: `${a.id}->${b.id}`,
       source: a.id,
       target: b.id,
-      style: { stroke: 'var(--border)', strokeWidth: 1.5 },
+      type: 'smoothstep',
+      style: { stroke: 'color-mix(in srgb, var(--brand-500) 60%, var(--border))', strokeWidth: 2 },
     });
   }
 

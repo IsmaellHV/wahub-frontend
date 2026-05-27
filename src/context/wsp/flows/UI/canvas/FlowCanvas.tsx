@@ -148,6 +148,29 @@ export const FlowCanvas = ({ value, agents, onChange }: Props) => {
             <PaletteItemView key={p.subtype} item={p} onDragStart={onDragStart} />
           ))}
         </PaletteSection>
+        <button
+          className="btn btn-secondary btn-sm"
+          type="button"
+          onClick={() => {
+            setNodes(curr => {
+              const triggers = curr.filter(n => n.data.kind === 'trigger');
+              const steps = curr.filter(n => n.data.kind === 'step').slice().sort((a, b) => a.position.y - b.position.y);
+              const X = 200;
+              const Y0 = 60;
+              const GAP = 120;
+              const next = [
+                ...triggers.map((n, i) => ({ ...n, position: { x: X, y: Y0 + i * GAP } })),
+                ...steps.map((n, i) => ({ ...n, position: { x: X, y: Y0 + (triggers.length + i) * GAP } })),
+              ];
+              emitFlat(next);
+              return next;
+            });
+            // Re-fit view despues del relayout.
+            setTimeout(() => rfInstance?.fitView({ padding: 0.25, maxZoom: 1.1 }), 50);
+          }}
+        >
+          <Icon name="layers" size={12} /> Auto-organizar
+        </button>
         <div style={{ marginTop: 'auto', fontSize: 11, color: 'var(--fg-faint)', lineHeight: 1.4 }}>
           Arrastra al canvas. El orden de los steps lo define su posicion vertical.
         </div>
@@ -164,12 +187,15 @@ export const FlowCanvas = ({ value, agents, onChange }: Props) => {
           onPaneClick={() => setSelectedId(null)}
           onInit={setRfInstance}
           fitView
-          fitViewOptions={{ padding: 0.2, maxZoom: 1.2 }}
+          fitViewOptions={{ padding: 0.25, maxZoom: 1.1 }}
           proOptions={{ hideAttribution: true }}
           colorMode="dark"
           nodesDraggable
           nodesConnectable={false}
           edgesFocusable={false}
+          snapToGrid
+          snapGrid={[16, 16]}
+          defaultEdgeOptions={{ type: 'smoothstep' }}
         >
           <Background variant={BackgroundVariant.Dots} gap={16} size={1} color="color-mix(in srgb, var(--border) 70%, transparent)" />
           <Controls showInteractive={false} />
