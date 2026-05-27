@@ -25,12 +25,14 @@ const PRIMARY = (t: (k: string) => string): NavItem[] => [
   { href: '/messages', label: t('nav.sendMessage'), icon: 'send' },
   { href: '/agents', label: t('nav.aiAgents'), icon: 'sparkles', beta: true },
   { href: '/broadcast', label: t('nav.broadcast'), icon: 'send' },
-  { href: '/contacts', label: t('nav.contacts'), icon: 'contacts' },
+  // TODO: implementar /contacts (no existe la pagina aun)
+  // { href: '/contacts', label: t('nav.contacts'), icon: 'contacts' },
 ];
 
 const BUILD = (t: (k: string) => string): NavItem[] => [
   { href: '/flows', label: t('nav.flows'), icon: 'flow', beta: true },
-  { href: '/analytics', label: t('nav.analytics'), icon: 'chart' },
+  // TODO: implementar /analytics (no existe la pagina aun)
+  // { href: '/analytics', label: t('nav.analytics'), icon: 'chart' },
   { href: '/api', label: t('nav.api'), icon: 'webhook' },
 ];
 
