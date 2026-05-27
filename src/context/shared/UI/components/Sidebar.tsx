@@ -21,17 +21,22 @@ const PRIMARY = (t: (k: string) => string): NavItem[] => [
   { href: '/dashboard', label: t('nav.dashboard'), icon: 'home' },
   { href: '/connect', label: t('nav.connect'), icon: 'qr' },
   { href: '/bots', label: t('nav.sessions'), icon: 'bot' },
-  { href: '/inbox', label: t('nav.inbox'), icon: 'chat', dot: true },
+  // TODO: re-habilitar cuando inbox tenga data real (hoy es mock)
+  // { href: '/inbox', label: t('nav.inbox'), icon: 'chat', dot: true },
   { href: '/messages', label: t('nav.sendMessage'), icon: 'send' },
   { href: '/agents', label: t('nav.aiAgents'), icon: 'sparkles', beta: true },
-  { href: '/broadcast', label: t('nav.broadcast'), icon: 'send' },
-  { href: '/contacts', label: t('nav.contacts'), icon: 'contacts' },
+  // TODO: re-habilitar cuando broadcast tenga data real (hoy es mock)
+  // { href: '/broadcast', label: t('nav.broadcast'), icon: 'send' },
+  // TODO: implementar /contacts (no existe la pagina aun)
+  // { href: '/contacts', label: t('nav.contacts'), icon: 'contacts' },
 ];
 
 const BUILD = (t: (k: string) => string): NavItem[] => [
   { href: '/flows', label: t('nav.flows'), icon: 'flow', beta: true },
-  { href: '/analytics', label: t('nav.analytics'), icon: 'chart' },
-  { href: '/api', label: t('nav.api'), icon: 'webhook' },
+  // TODO: implementar /analytics (no existe la pagina aun)
+  // { href: '/analytics', label: t('nav.analytics'), icon: 'chart' },
+  // TODO: re-habilitar cuando API y Webhooks tenga UI real
+  // { href: '/api', label: t('nav.api'), icon: 'webhook' },
 ];
 
 const isActive = (pathname: string, href: string) => {
