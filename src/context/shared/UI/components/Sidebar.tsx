@@ -76,7 +76,7 @@ export const Sidebar = () => {
       />
     <aside className="sidebar">
       <div className="sidebar-header">
-        <Link href="/" className="brand">
+        <Link href="/dashboard" className="brand">
           <Logo size={26} />
           <span>waHub</span>
         </Link>

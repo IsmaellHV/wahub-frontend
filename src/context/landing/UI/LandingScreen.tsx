@@ -1,14 +1,25 @@
 'use client';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useI18n } from '@shared/i18n/I18nProvider';
 import { Icon, type IconName } from '@shared/UI/components/Icon';
 import { Logo } from '@shared/UI/components/Logo';
 import { useTheme } from '@shared/UI/ThemeProvider';
+import { AdapterStorage, STORAGE_KEYS } from '@shared/Infrastructure/AdapterStorage';
 import Link from 'next/link';
 import './landing.css';
 
 export const LandingScreen = () => {
   const { t, locale, setLocale } = useI18n();
   const { theme, toggleTheme } = useTheme();
+  const router = useRouter();
+
+  // Si ya hay sesion activa, redirigir directo al dashboard. Evita que el
+  // usuario logueado vea la landing publica al pegarle al logo o al root.
+  useEffect(() => {
+    const token = AdapterStorage.get(STORAGE_KEYS.ACCESS_TOKEN);
+    if (token) router.replace('/dashboard');
+  }, [router]);
 
   return (
     <div className="landing">
