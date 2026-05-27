@@ -127,6 +127,10 @@ export const AdapterApi = {
     return this.request<T>(path, { ...opts, method: 'PUT', body });
   },
 
+  patch<T>(path: string, body?: unknown, opts: ApiOptions = {}) {
+    return this.request<T>(path, { ...opts, method: 'PATCH', body });
+  },
+
   delete<T>(path: string, opts: ApiOptions = {}) {
     return this.request<T>(path, { ...opts, method: 'DELETE' });
   },

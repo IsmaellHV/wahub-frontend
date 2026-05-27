@@ -102,4 +102,12 @@ export const ENVIRONMENT = {
       return buildRoute(this.SCHEMA, this.ENTITY);
     },
   },
+
+  FLOW: {
+    SCHEMA: 'wsp',
+    ENTITY: 'flows',
+    get ROUTE() {
+      return buildRoute(this.SCHEMA, this.ENTITY);
+    },
+  },
 };
