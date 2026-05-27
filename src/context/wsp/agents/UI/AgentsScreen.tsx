@@ -12,10 +12,29 @@ const repo = new RepositoryAiAgentImpl();
 const connRepo = new RepositoryConnectionImpl();
 
 const PROVIDER_MODELS: Record<AiProvider, string[]> = {
-  openai: ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo'],
+  openai: ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-4.1-mini'],
   anthropic: ['claude-sonnet-4-5', 'claude-opus-4-1', 'claude-haiku-4-5'],
+  deepseek: ['deepseek-chat', 'deepseek-reasoner'],
   custom: [''],
 };
+
+interface ProviderMeta {
+  id: AiProvider;
+  label: string;
+  badge: string; // 2-3 chars for visual chip
+  color: string; // accent color
+  apiKeyHint: string;
+  apiKeyUrl?: string;
+}
+
+const PROVIDERS: ProviderMeta[] = [
+  { id: 'openai', label: 'OpenAI', badge: 'AI', color: '#10a37f', apiKeyHint: 'sk-…', apiKeyUrl: 'https://platform.openai.com/api-keys' },
+  { id: 'anthropic', label: 'Anthropic', badge: 'Cl', color: '#d97757', apiKeyHint: 'sk-ant-…', apiKeyUrl: 'https://console.anthropic.com/settings/keys' },
+  { id: 'deepseek', label: 'DeepSeek', badge: 'DS', color: '#4d6bfe', apiKeyHint: 'sk-…', apiKeyUrl: 'https://platform.deepseek.com/api_keys' },
+  { id: 'custom', label: 'Custom', badge: '?', color: '#64748b', apiKeyHint: 'tu-token' },
+];
+
+const providerMeta = (id: AiProvider): ProviderMeta => PROVIDERS.find(p => p.id === id) ?? PROVIDERS[0];
 
 const blankAgent = (): ISaveAgentInput => ({
   name: '',
@@ -195,14 +214,11 @@ export const AgentsScreen = () => {
 
         {editing && (
           <div className="modal-backdrop" onClick={() => !saving && setEditing(null)}>
-            <div className="modal" onClick={(e) => e.stopPropagation()}>
-              <div className="card-h" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ margin: 0 }}>{editing.id ? 'Editar agente' : 'Nuevo agente'}</h3>
-                <button className="icon-btn" onClick={() => setEditing(null)}>
-                  <Icon name="x" size={14} />
-                </button>
-              </div>
-              <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 12, maxHeight: '70vh', overflowY: 'auto' }}>
+            <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 680 }}>
+              <AgentModalHeader editing={editing} onClose={() => setEditing(null)} />
+              <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 18, maxHeight: '72vh', overflowY: 'auto', padding: 20 }}>
+                {/* IDENTIDAD */}
+                <SectionTitle>Identidad</SectionTitle>
                 <Field label="Nombre">
                   <input
                     className="input"
@@ -211,49 +227,7 @@ export const AgentsScreen = () => {
                     placeholder="Asistente de ventas"
                   />
                 </Field>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                  <Field label="Proveedor">
-                    <select
-                      className="input"
-                      value={editing.provider}
-                      onChange={(e) =>
-                        setEditing({
-                          ...editing,
-                          provider: e.target.value as AiProvider,
-                          model: PROVIDER_MODELS[e.target.value as AiProvider][0],
-                        })
-                      }
-                    >
-                      <option value="openai">OpenAI</option>
-                      <option value="anthropic">Anthropic</option>
-                      <option value="custom">Custom</option>
-                    </select>
-                  </Field>
-                  <Field label="Modelo">
-                    {editing.provider === 'custom' ? (
-                      <input
-                        className="input"
-                        value={editing.model}
-                        onChange={(e) => setEditing({ ...editing, model: e.target.value })}
-                      />
-                    ) : (
-                      <select
-                        className="input"
-                        value={editing.model}
-                        onChange={(e) => setEditing({ ...editing, model: e.target.value })}
-                      >
-                        {models.map((m) => (
-                          <option key={m} value={m}>
-                            {m}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  </Field>
-                </div>
-
-                <Field label="Sesión de WhatsApp (opcional)">
+                <Field label="Sesión de WhatsApp (opcional)" hint="Si la fijas, este agente responde solo en esa sesión">
                   <select
                     className="input"
                     value={editing.connection_id ?? ''}
@@ -271,6 +245,39 @@ export const AgentsScreen = () => {
                   </select>
                 </Field>
 
+                {/* PROVEEDOR */}
+                <Divider />
+                <SectionTitle>Proveedor</SectionTitle>
+                <ProviderPicker
+                  value={editing.provider}
+                  onChange={(p) =>
+                    setEditing({ ...editing, provider: p, model: PROVIDER_MODELS[p][0] ?? '' })
+                  }
+                />
+                <Field label="Modelo">
+                  {editing.provider === 'custom' ? (
+                    <input
+                      className="input"
+                      value={editing.model}
+                      onChange={(e) => setEditing({ ...editing, model: e.target.value })}
+                      placeholder="nombre-del-modelo"
+                    />
+                  ) : (
+                    <select
+                      className="input"
+                      value={editing.model}
+                      onChange={(e) => setEditing({ ...editing, model: e.target.value })}
+                    >
+                      {models.map((m) => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                  )}
+                </Field>
+
+                {/* COMPORTAMIENTO */}
+                <Divider />
+                <SectionTitle>Comportamiento</SectionTitle>
                 <Field label="Personalidad / instrucciones (system prompt)">
                   <textarea
                     className="input"
@@ -284,7 +291,6 @@ export const AgentsScreen = () => {
                     {editing.system_prompt.length}/8000
                   </div>
                 </Field>
-
                 <Field label="Saludo inicial (opcional)">
                   <input
                     className="input"
@@ -292,9 +298,8 @@ export const AgentsScreen = () => {
                     onChange={(e) => setEditing({ ...editing, greeting: e.target.value })}
                   />
                 </Field>
-
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                  <Field label="Temperatura">
+                  <Field label="Temperatura" hint="0 = determinista, 1 = creativo">
                     <input
                       type="number"
                       className="input"
@@ -305,7 +310,7 @@ export const AgentsScreen = () => {
                       onChange={(e) => setEditing({ ...editing, temperature: Number(e.target.value) })}
                     />
                   </Field>
-                  <Field label="Max tokens">
+                  <Field label="Max tokens" hint="Limita longitud de la respuesta">
                     <input
                       type="number"
                       className="input"
@@ -317,23 +322,42 @@ export const AgentsScreen = () => {
                   </Field>
                 </div>
 
-                <Field label="API Key">
-                  <input
-                    type="password"
-                    className="input"
-                    value={editing.api_key ?? ''}
-                    onChange={(e) => setEditing({ ...editing, api_key: e.target.value })}
-                    placeholder={editing.id ? '•••••••• (deja vacío para conservar)' : 'sk-…'}
-                  />
-                </Field>
+                {/* CREDENCIALES */}
+                <Divider />
+                <SectionTitle>Credenciales</SectionTitle>
+                <ApiKeyField
+                  provider={editing.provider}
+                  value={editing.api_key ?? ''}
+                  isEdit={!!editing.id}
+                  onChange={(v) => setEditing({ ...editing, api_key: v })}
+                />
 
-                <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13, marginTop: 4 }}>
+                {/* TOGGLE */}
+                <Divider />
+                <label
+                  style={{
+                    display: 'flex',
+                    gap: 10,
+                    alignItems: 'center',
+                    padding: '10px 12px',
+                    borderRadius: 'var(--r-md)',
+                    background: editing.enabled ? 'color-mix(in srgb, var(--brand-500) 8%, transparent)' : 'var(--bg-elev)',
+                    border: `1px solid ${editing.enabled ? 'color-mix(in srgb, var(--brand-500) 35%, var(--border))' : 'var(--border)'}`,
+                    cursor: 'pointer',
+                    fontSize: 13,
+                  }}
+                >
                   <input
                     type="checkbox"
                     checked={!!editing.enabled}
                     onChange={(e) => setEditing({ ...editing, enabled: e.target.checked })}
                   />
-                  Activar (responde automáticamente)
+                  <div>
+                    <div style={{ fontWeight: 550 }}>Activar agente</div>
+                    <div style={{ fontSize: 11, color: 'var(--fg-muted)' }}>
+                      Si esta apagado, no responde automaticamente
+                    </div>
+                  </div>
                 </label>
               </div>
               <div
@@ -373,17 +397,191 @@ export const AgentsScreen = () => {
           border-radius: var(--r-lg);
           border: 1px solid var(--border);
           width: 100%;
-          max-width: 560px;
+          max-width: 680px;
           box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.4);
+          max-height: 90vh;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
         }
       `}</style>
     </>
   );
 };
 
-const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
+const Field = ({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-    <label style={{ fontSize: 12, color: 'var(--fg-muted)', fontWeight: 550 }}>{label}</label>
+    <label style={{ fontSize: 12, color: 'var(--fg-muted)', fontWeight: 550 }}>
+      {label}
+      {hint && <span style={{ color: 'var(--fg-faint)', fontWeight: 400, marginLeft: 6 }}>· {hint}</span>}
+    </label>
     {children}
   </div>
 );
+
+const SectionTitle = ({ children }: { children: React.ReactNode }) => (
+  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.8, textTransform: 'uppercase', color: 'var(--fg-faint)' }}>
+    {children}
+  </div>
+);
+
+const Divider = () => <div style={{ height: 1, background: 'var(--border)', opacity: 0.6 }} />;
+
+// ----------------------------------------------------------------
+// Header: muestra titulo + chip del proveedor activo + close button.
+// ----------------------------------------------------------------
+const AgentModalHeader = ({ editing, onClose }: { editing: ISaveAgentInput; onClose: () => void }) => {
+  const meta = providerMeta(editing.provider);
+  return (
+    <div
+      className="card-h"
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '14px 20px',
+        borderBottom: '1px solid var(--border)',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+        <div
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 8,
+            display: 'grid',
+            placeItems: 'center',
+            background: `color-mix(in srgb, ${meta.color} 20%, transparent)`,
+            color: meta.color,
+            fontWeight: 700,
+            fontSize: 12,
+            letterSpacing: 0.4,
+          }}
+        >
+          {meta.badge}
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <h3 style={{ margin: 0, fontSize: 16, lineHeight: 1.2 }}>
+            {editing.id ? 'Editar agente' : 'Nuevo agente'}
+          </h3>
+          <div style={{ fontSize: 11, color: 'var(--fg-muted)' }}>
+            {meta.label} · {editing.model || '(sin modelo)'}
+          </div>
+        </div>
+      </div>
+      <button className="icon-btn" onClick={onClose} title="Cerrar">
+        <Icon name="x" size={14} />
+      </button>
+    </div>
+  );
+};
+
+// ----------------------------------------------------------------
+// Provider picker: 4 cards seleccionables.
+// ----------------------------------------------------------------
+const ProviderPicker = ({ value, onChange }: { value: AiProvider; onChange: (p: AiProvider) => void }) => (
+  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+    {PROVIDERS.map((p) => {
+      const active = p.id === value;
+      return (
+        <button
+          key={p.id}
+          type="button"
+          onClick={() => onChange(p.id)}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 6,
+            padding: '12px 8px',
+            borderRadius: 'var(--r-md)',
+            background: active ? `color-mix(in srgb, ${p.color} 12%, transparent)` : 'var(--bg-elev)',
+            border: `1.5px solid ${active ? p.color : 'var(--border)'}`,
+            cursor: 'pointer',
+            color: 'var(--fg)',
+            transition: 'background 120ms, border 120ms',
+          }}
+        >
+          <div
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: 8,
+              display: 'grid',
+              placeItems: 'center',
+              background: `color-mix(in srgb, ${p.color} 20%, transparent)`,
+              color: p.color,
+              fontWeight: 700,
+              fontSize: 11,
+            }}
+          >
+            {p.badge}
+          </div>
+          <div style={{ fontSize: 12, fontWeight: 550 }}>{p.label}</div>
+        </button>
+      );
+    })}
+  </div>
+);
+
+// ----------------------------------------------------------------
+// API Key con toggle de visibilidad + link a la consola del provider.
+// ----------------------------------------------------------------
+const ApiKeyField = ({
+  provider,
+  value,
+  isEdit,
+  onChange,
+}: {
+  provider: AiProvider;
+  value: string;
+  isEdit: boolean;
+  onChange: (v: string) => void;
+}) => {
+  const [show, setShow] = useState(false);
+  const meta = providerMeta(provider);
+
+  return (
+    <Field label="API Key">
+      <div style={{ position: 'relative' }}>
+        <input
+          type={show ? 'text' : 'password'}
+          className="input"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={isEdit ? '•••••••• (deja vacío para conservar)' : meta.apiKeyHint}
+          style={{ paddingRight: 40, fontFamily: show ? 'var(--font-mono, monospace)' : 'inherit' }}
+          autoComplete="off"
+        />
+        <button
+          type="button"
+          onClick={() => setShow((s) => !s)}
+          title={show ? 'Ocultar' : 'Mostrar'}
+          style={{
+            position: 'absolute',
+            right: 6,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            background: 'transparent',
+            border: 'none',
+            color: 'var(--fg-muted)',
+            cursor: 'pointer',
+            padding: 6,
+            borderRadius: 6,
+            display: 'inline-flex',
+          }}
+        >
+          <Icon name="eye" size={13} />
+        </button>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--fg-faint)' }}>
+        <span>Almacenada en plano en DB — usa keys con scope limitado</span>
+        {meta.apiKeyUrl && (
+          <a href={meta.apiKeyUrl} target="_blank" rel="noopener noreferrer" style={{ color: meta.color, textDecoration: 'none' }}>
+            Obtener key ↗
+          </a>
+        )}
+      </div>
+    </Field>
+  );
+};

@@ -1,6 +1,6 @@
 import type { IAuditFields } from '@shared/Domain/ILogDocument';
 
-export type AiProvider = 'openai' | 'anthropic' | 'custom';
+export type AiProvider = 'openai' | 'anthropic' | 'deepseek' | 'custom';
 
 export interface IAiAgent extends IAuditFields {
   id: number;
