@@ -26,8 +26,6 @@ const dispatchLogout = (reason: 'refresh-failed' | 'no-refresh-token' | 'manual'
 
 const buildHeaders = (auth: boolean, hasBody: boolean, init?: HeadersInit): Headers => {
   const headers = new Headers(init);
-  // Solo set Content-Type cuando hay body. Fastify rechaza `Content-Type: application/json`
-  // con body vacío (ej. DELETE) con "Body cannot be empty when content-type is set to 'application/json'".
   if (hasBody && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
   if (auth) {
     const token = AdapterStorage.get(STORAGE_KEYS.ACCESS_TOKEN);
@@ -38,37 +36,42 @@ const buildHeaders = (auth: boolean, hasBody: boolean, init?: HeadersInit): Head
 
 let refreshInFlight: Promise<boolean> | null = null;
 
-const refreshAccessToken = async (): Promise<boolean> => {
-  if (refreshInFlight) return refreshInFlight;
-
-  const refreshToken = AdapterStorage.get(STORAGE_KEYS.REFRESH_TOKEN);
-  if (!refreshToken) {
-    dispatchLogout('no-refresh-token');
+const doRefresh = async (refreshToken: string): Promise<boolean> => {
+  try {
+    const res = await fetch(`${API_URL}${REFRESH_PATH}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    });
+    if (res.status === 401 || res.status === 403) {
+      dispatchLogout('refresh-failed');
+      return false;
+    }
+    if (!res.ok) return false;
+    const data = (await res.json()) as { accessToken?: string; refreshToken?: string };
+    if (!data.accessToken || !data.refreshToken) {
+      dispatchLogout('refresh-failed');
+      return false;
+    }
+    AdapterStorage.set(STORAGE_KEYS.ACCESS_TOKEN, data.accessToken);
+    AdapterStorage.set(STORAGE_KEYS.REFRESH_TOKEN, data.refreshToken);
+    return true;
+  } catch {
     return false;
   }
+};
+
+const refreshAccessToken = (): Promise<boolean> => {
+  if (refreshInFlight) return refreshInFlight;
 
   refreshInFlight = (async () => {
     try {
-      const res = await fetch(`${API_URL}${REFRESH_PATH}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken }),
-      });
-      if (!res.ok) {
-        dispatchLogout('refresh-failed');
+      const refreshToken = AdapterStorage.get(STORAGE_KEYS.REFRESH_TOKEN);
+      if (!refreshToken) {
+        dispatchLogout('no-refresh-token');
         return false;
       }
-      const data = (await res.json()) as { accessToken?: string; refreshToken?: string };
-      if (!data.accessToken || !data.refreshToken) {
-        dispatchLogout('refresh-failed');
-        return false;
-      }
-      AdapterStorage.set(STORAGE_KEYS.ACCESS_TOKEN, data.accessToken);
-      AdapterStorage.set(STORAGE_KEYS.REFRESH_TOKEN, data.refreshToken);
-      return true;
-    } catch {
-      dispatchLogout('refresh-failed');
-      return false;
+      return await doRefresh(refreshToken);
     } finally {
       refreshInFlight = null;
     }
