@@ -1,6 +1,21 @@
 import { AdapterApi } from '@shared/Infrastructure/AdapterApi';
 import { AdapterConfigure } from './AdapterConfigure';
-import type { IAiAgent, ISaveAgentInput } from '../Domain/IAiAgent';
+import type { IAiAgent, ISaveAgentInput, AiProvider } from '../Domain/IAiAgent';
+
+export interface TestAgentInput {
+  provider: AiProvider;
+  model: string;
+  system_prompt: string;
+  api_key: string;
+  temperature?: number | null;
+  max_tokens?: number | null;
+  message: string;
+}
+
+export interface TestAgentResult {
+  reply: string;
+  latency_ms: number;
+}
 
 // Coerce a number nativo. Postgres devuelve DECIMAL como string ("0.7") para
 // no perder precision, asi que tenemos que normalizar para que el backend
@@ -54,5 +69,9 @@ export class RepositoryAiAgentImpl {
 
   remove(id: number): Promise<{ ok: boolean }> {
     return AdapterApi.delete<{ ok: boolean }>(AdapterConfigure.ENDPOINT.REMOVE(id));
+  }
+
+  test(input: TestAgentInput): Promise<TestAgentResult> {
+    return AdapterApi.post<TestAgentResult>(AdapterConfigure.ENDPOINT.TEST, input);
   }
 }

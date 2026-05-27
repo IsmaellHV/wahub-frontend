@@ -10,5 +10,6 @@ export const AdapterConfigure = {
     CREATE: ENVIRONMENT.AI_AGENT.ROUTE,
     UPDATE: (id: number | string) => `${ENVIRONMENT.AI_AGENT.ROUTE}/${id}`,
     REMOVE: (id: number | string) => `${ENVIRONMENT.AI_AGENT.ROUTE}/${id}`,
+    TEST: `${ENVIRONMENT.AI_AGENT.ROUTE}/test`,
   },
 };

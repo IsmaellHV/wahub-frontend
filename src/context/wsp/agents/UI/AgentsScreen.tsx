@@ -335,6 +335,11 @@ export const AgentsScreen = () => {
                   onChange={(v) => setEditing({ ...editing, api_key: v })}
                 />
 
+                {/* PRUEBA */}
+                <Divider />
+                <SectionTitle>Probar agente</SectionTitle>
+                <AgentTester editing={editing} />
+
                 {/* TOGGLE */}
                 <Divider />
                 <label
@@ -526,6 +531,126 @@ const ProviderPicker = ({ value, onChange }: { value: AiProvider; onChange: (p: 
     })}
   </div>
 );
+
+// ----------------------------------------------------------------
+// Tester: envia un mensaje al provider con la config actual del modal
+// (sin guardar) y muestra reply + latencia. Util para validar prompt + key
+// antes de persistir.
+// ----------------------------------------------------------------
+const AgentTester = ({ editing }: { editing: ISaveAgentInput }) => {
+  const [message, setMessage] = useState('Hola, ¿quién eres?');
+  const [busy, setBusy] = useState(false);
+  const [reply, setReply] = useState<string | null>(null);
+  const [latency, setLatency] = useState<number | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  const canTest = !!editing.api_key && !!editing.model && !!editing.system_prompt;
+
+  const run = async () => {
+    setBusy(true);
+    setErr(null);
+    setReply(null);
+    setLatency(null);
+    try {
+      const res = await repo.test({
+        provider: editing.provider,
+        model: editing.model,
+        system_prompt: editing.system_prompt,
+        api_key: editing.api_key ?? '',
+        temperature: editing.temperature ?? null,
+        max_tokens: editing.max_tokens ?? null,
+        message,
+      });
+      setReply(res.reply);
+      setLatency(res.latency_ms);
+    } catch (e) {
+      setErr((e as { message?: string })?.message ?? 'Falló la prueba');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <Field label="Mensaje de prueba" hint="Se envia con tu system prompt actual">
+        <div style={{ display: 'flex', gap: 6 }}>
+          <input
+            className="input"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Hola, que puedes hacer?"
+            style={{ flex: 1 }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && canTest && !busy) {
+                e.preventDefault();
+                void run();
+              }
+            }}
+          />
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => void run()}
+            disabled={busy || !canTest || !message.trim()}
+            title={!canTest ? 'Completa api_key, model y system_prompt primero' : ''}
+          >
+            {busy ? '…' : (
+              <>
+                <Icon name="send" size={12} /> Probar
+              </>
+            )}
+          </button>
+        </div>
+      </Field>
+
+      {!canTest && (
+        <div style={{ fontSize: 11, color: 'var(--fg-faint)' }}>
+          Necesitas api_key, modelo y system prompt para probar.
+        </div>
+      )}
+
+      {err && (
+        <div
+          style={{
+            padding: '8px 10px',
+            borderRadius: 'var(--r-md)',
+            background: 'color-mix(in srgb, var(--status-error) 10%, transparent)',
+            color: 'var(--status-error)',
+            fontSize: 12,
+            wordBreak: 'break-word',
+          }}
+        >
+          {err}
+        </div>
+      )}
+
+      {reply !== null && (
+        <div
+          style={{
+            padding: '10px 12px',
+            borderRadius: 'var(--r-md)',
+            background: 'var(--bg-elev)',
+            border: '1px solid var(--border)',
+            fontSize: 13,
+            lineHeight: 1.5,
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', color: 'var(--fg-faint)' }}>
+              Respuesta
+            </span>
+            {latency !== null && (
+              <span style={{ fontSize: 11, color: 'var(--fg-faint)' }}>{latency} ms</span>
+            )}
+          </div>
+          {reply || <span style={{ color: 'var(--fg-faint)' }}>(respuesta vacia)</span>}
+        </div>
+      )}
+    </div>
+  );
+};
 
 // ----------------------------------------------------------------
 // API Key con toggle de visibilidad + link a la consola del provider.
