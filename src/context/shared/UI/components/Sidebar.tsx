@@ -35,7 +35,8 @@ const BUILD = (t: (k: string) => string): NavItem[] => [
   { href: '/flows', label: t('nav.flows'), icon: 'flow', beta: true },
   // TODO: implementar /analytics (no existe la pagina aun)
   // { href: '/analytics', label: t('nav.analytics'), icon: 'chart' },
-  { href: '/api', label: t('nav.api'), icon: 'webhook' },
+  // TODO: re-habilitar cuando API y Webhooks tenga UI real
+  // { href: '/api', label: t('nav.api'), icon: 'webhook' },
 ];
 
 const isActive = (pathname: string, href: string) => {
