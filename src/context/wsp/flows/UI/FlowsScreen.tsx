@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Topbar } from '@shared/UI/components/Topbar';
 import { Icon } from '@shared/UI/components/Icon';
 import { useI18n } from '@shared/i18n/I18nProvider';
@@ -26,15 +26,15 @@ const MATCH_OPTIONS: Array<{ v: FlowTriggerKeywordMatch; l: string }> = [
 ];
 
 const triggerLabel = (t: FlowTrigger): string => {
-  if (t.type === 'keyword') return `palabra: "${t.value}" (${t.match})`;
+  if (t.type === 'keyword') return `"${t.value || '…'}" (${t.match})`;
   if (t.type === 'catchall') return 'cualquier mensaje';
-  return `schedule: ${t.cron}`;
+  return `cron: ${t.cron}`;
 };
 
 const stepLabel = (s: FlowStep): string => {
-  if (s.type === 'send_message') return `enviar mensaje (${s.body.slice(0, 32)}${s.body.length > 32 ? '…' : ''})`;
+  if (s.type === 'send_message') return `mensaje: ${s.body.slice(0, 28)}${s.body.length > 28 ? '…' : ''}`;
   if (s.type === 'wait') return `esperar ${s.seconds}s`;
-  return `respuesta IA (agente ${s.agent_id})`;
+  return `IA · agente ${s.agent_id}`;
 };
 
 export const FlowsScreen = () => {
@@ -45,8 +45,6 @@ export const FlowsScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<{ id?: number; input: ISaveFlowInput } | null>(null);
   const [saving, setSaving] = useState(false);
-
-  void t;
 
   const reload = async (): Promise<void> => {
     setLoading(true);
@@ -78,7 +76,6 @@ export const FlowsScreen = () => {
         steps: f.steps,
       },
     });
-  const cancel = (): void => setEditing(null);
 
   const save = async (): Promise<void> => {
     if (!editing) return;
@@ -106,7 +103,7 @@ export const FlowsScreen = () => {
   };
 
   const remove = async (f: IFlow): Promise<void> => {
-    if (!confirm(`Eliminar flujo "${f.name}"?`)) return;
+    if (!confirm(`¿Eliminar flujo "${f.name}"?`)) return;
     try {
       await repo.remove(f.id);
       setFlows(curr => curr.filter(x => x.id !== f.id));
@@ -115,76 +112,107 @@ export const FlowsScreen = () => {
     }
   };
 
-  const counts = useMemo(() => ({ total: flows.length, enabled: flows.filter(f => f.enabled).length }), [flows]);
-
   return (
     <>
-      <Topbar
-        crumbs={['Flujos']}
-        actions={
-          <button className="btn btn-primary btn-sm" onClick={startNew}>
-            <Icon name="plus" size={14} /> Nuevo flujo
-          </button>
-        }
-      />
-
-      <div className="p-6 space-y-4 max-w-5xl">
-        <div className="text-sm opacity-70">
-          {loading ? 'Cargando…' : `${counts.total} flujos · ${counts.enabled} activos`}
+      <Topbar crumbs={[t('nav.flows')]} />
+      <div className="page fade-in">
+        <div className="page-h">
+          <div>
+            <h1>{t('nav.flows')}</h1>
+            <div className="sub">Automatiza respuestas: define disparadores (palabras clave, schedule) y pasos secuenciales.</div>
+          </div>
+          <div className="actions">
+            <button className="btn btn-brand" onClick={startNew}>
+              <Icon name="plus" size={14} /> Nuevo flujo
+            </button>
+          </div>
         </div>
 
-        {error && <div className="card p-3 text-red-400 text-sm">{error}</div>}
-
-        {!loading && flows.length === 0 && !editing && (
-          <div className="card p-8 text-center opacity-70">
-            <p className="text-sm mb-3">Aun no tienes flujos. Crea el primero para automatizar respuestas.</p>
-            <button className="btn btn-primary btn-sm" onClick={startNew}>
-              <Icon name="plus" size={14} /> Crear flujo
-            </button>
+        {error && (
+          <div
+            style={{
+              marginBottom: 12,
+              padding: '10px 14px',
+              borderRadius: 'var(--r-md)',
+              background: 'color-mix(in srgb, var(--status-error) 10%, transparent)',
+              color: 'var(--status-error)',
+              fontSize: 13,
+            }}
+          >
+            {error}
           </div>
         )}
 
-        <div className="space-y-3">
-          {flows.map(f => (
-            <div key={f.id} className="card p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium truncate">{f.name}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded ${f.enabled ? 'bg-green-500/15 text-green-400' : 'bg-zinc-500/15 text-zinc-400'}`}>
-                      {f.enabled ? 'Activo' : 'Pausado'}
-                    </span>
+        {loading ? (
+          <div style={{ padding: 40, textAlign: 'center', color: 'var(--fg-muted)' }}>{t('common.loading')}</div>
+        ) : flows.length === 0 && !editing ? (
+          <div className="card" style={{ padding: 60, textAlign: 'center' }}>
+            <div className="empty-icon">
+              <Icon name="flow" size={20} />
+            </div>
+            <div style={{ fontSize: 15, fontWeight: 600, marginTop: 12 }}>Sin flujos todavía</div>
+            <div style={{ fontSize: 13, color: 'var(--fg-muted)', marginTop: 6, marginBottom: 16 }}>
+              Crea tu primer flujo para automatizar respuestas en WhatsApp.
+            </div>
+            <button className="btn btn-brand" onClick={startNew}>
+              <Icon name="plus" size={14} /> Crear primer flujo
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
+            {flows.map(f => (
+              <div key={f.id} className="card">
+                <div className="card-h" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ minWidth: 0 }}>
+                    <h3 style={{ margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</h3>
+                    {f.description && (
+                      <div className="mono" style={{ fontSize: 11, color: 'var(--fg-faint)', marginTop: 2 }}>
+                        {f.description}
+                      </div>
+                    )}
                   </div>
-                  {f.description && <p className="text-xs opacity-60 mt-1">{f.description}</p>}
-                  <div className="mt-2 text-xs space-y-0.5 opacity-70">
-                    <div>Triggers: {f.triggers.map(triggerLabel).join(' · ') || '—'}</div>
-                    <div>Steps: {f.steps.map(stepLabel).join(' → ') || '—'}</div>
-                  </div>
+                  <span className={`pill pill-${f.enabled ? 'online' : 'idle'}`}>
+                    <span className={`dot dot-${f.enabled ? 'online pulse' : 'idle'}`} />
+                    {f.enabled ? 'activo' : 'pausado'}
+                  </span>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <button className="btn btn-ghost btn-xs" onClick={() => void toggle(f)} title={f.enabled ? 'Pausar' : 'Activar'}>
-                    <Icon name={f.enabled ? 'pause' : 'play'} size={13} />
-                  </button>
-                  <button className="btn btn-ghost btn-xs" onClick={() => startEdit(f)} title="Editar">
-                    <Icon name="edit" size={13} />
-                  </button>
-                  <button className="btn btn-ghost btn-xs text-red-400" onClick={() => void remove(f)} title="Eliminar">
-                    <Icon name="trash" size={13} />
-                  </button>
+                <div className="card-body">
+                  <div style={{ fontSize: 12, color: 'var(--fg-muted)', lineHeight: 1.6 }}>
+                    <div>
+                      <span style={{ color: 'var(--fg-faint)' }}>Triggers:</span>{' '}
+                      {f.triggers.map(triggerLabel).join(' · ') || '—'}
+                    </div>
+                    <div>
+                      <span style={{ color: 'var(--fg-faint)' }}>Steps:</span>{' '}
+                      {f.steps.map(stepLabel).join(' → ') || '—'}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
+                    <button className="btn btn-secondary btn-sm" onClick={() => startEdit(f)}>
+                      <Icon name="edit" size={12} /> Editar
+                    </button>
+                    <button className="btn btn-ghost btn-sm" onClick={() => void toggle(f)}>
+                      <Icon name={f.enabled ? 'pause' : 'play'} size={12} /> {f.enabled ? 'Pausar' : 'Activar'}
+                    </button>
+                    <button className="btn btn-ghost btn-sm" onClick={() => void remove(f)} style={{ color: 'var(--status-error)', marginLeft: 'auto' }}>
+                      <Icon name="trash" size={12} />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {editing && (
-          <FlowEditor
+          <FlowEditorModal
             value={editing.input}
+            isEdit={editing.id !== undefined}
             agents={agents}
             saving={saving}
             onChange={input => setEditing({ ...editing, input })}
             onSave={save}
-            onCancel={cancel}
+            onClose={() => !saving && setEditing(null)}
           />
         )}
       </div>
@@ -193,19 +221,20 @@ export const FlowsScreen = () => {
 };
 
 // ============================================================
-// Editor inline
+// Editor modal
 // ============================================================
 
 interface EditorProps {
   value: ISaveFlowInput;
+  isEdit: boolean;
   agents: IAiAgent[];
   saving: boolean;
   onChange: (v: ISaveFlowInput) => void;
   onSave: () => void | Promise<void>;
-  onCancel: () => void;
+  onClose: () => void;
 }
 
-const FlowEditor = ({ value, agents, saving, onChange, onSave, onCancel }: EditorProps) => {
+const FlowEditorModal = ({ value, isEdit, agents, saving, onChange, onSave, onClose }: EditorProps) => {
   const setField = <K extends keyof ISaveFlowInput>(k: K, v: ISaveFlowInput[K]): void => onChange({ ...value, [k]: v });
 
   const addTrigger = (type: FlowTrigger['type']): void => {
@@ -232,86 +261,126 @@ const FlowEditor = ({ value, agents, saving, onChange, onSave, onCancel }: Edito
   const removeStep = (i: number): void => setField('steps', value.steps.filter((_, idx) => idx !== i));
   const updateStep = (i: number, s: FlowStep): void => setField('steps', value.steps.map((x, idx) => (idx === i ? s : x)));
 
+  const canSave = value.name.trim().length > 0 && value.triggers.length > 0 && value.steps.length > 0;
+
   return (
-    <div className="card p-5 space-y-5 border-2 border-brand-500/30">
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold">{value.name ? 'Editar flujo' : 'Nuevo flujo'}</h3>
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={!!value.enabled} onChange={e => setField('enabled', e.target.checked)} />
-          Activo
-        </label>
-      </div>
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 720 }}>
+        <div className="card-h" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3 style={{ margin: 0 }}>{isEdit ? 'Editar flujo' : 'Nuevo flujo'}</h3>
+          <button className="icon-btn" onClick={onClose}>
+            <Icon name="x" size={14} />
+          </button>
+        </div>
+        <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 16, maxHeight: '70vh', overflowY: 'auto' }}>
+          <Field label="Nombre">
+            <input className="input" value={value.name} onChange={e => setField('name', e.target.value)} placeholder="Bienvenida + cotizacion" />
+          </Field>
 
-      <div className="space-y-3">
-        <div>
-          <label className="block text-xs opacity-70 mb-1">Nombre</label>
-          <input className="input w-full" value={value.name} onChange={e => setField('name', e.target.value)} placeholder="Bienvenida + cotizacion" />
-        </div>
-        <div>
-          <label className="block text-xs opacity-70 mb-1">Descripcion (opcional)</label>
-          <input className="input w-full" value={value.description ?? ''} onChange={e => setField('description', e.target.value)} />
-        </div>
-      </div>
+          <Field label="Descripcion (opcional)">
+            <input className="input" value={value.description ?? ''} onChange={e => setField('description', e.target.value)} placeholder="Para que sirve este flujo" />
+          </Field>
 
-      {/* Triggers */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <h4 className="text-sm font-medium">Triggers</h4>
-          <div className="flex gap-1">
-            <button className="btn btn-ghost btn-xs" onClick={() => addTrigger('keyword')}>+ keyword</button>
-            <button className="btn btn-ghost btn-xs" onClick={() => addTrigger('catchall')}>+ catchall</button>
-            <button className="btn btn-ghost btn-xs" onClick={() => addTrigger('schedule')}>+ schedule</button>
-          </div>
-        </div>
-        <div className="space-y-2">
-          {value.triggers.map((t, i) => (
-            <TriggerRow key={i} value={t} onChange={v => updateTrigger(i, v)} onRemove={() => removeTrigger(i)} />
-          ))}
-          {value.triggers.length === 0 && <p className="text-xs opacity-60">Agrega al menos un trigger.</p>}
-        </div>
-      </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--fg-muted)' }}>
+            <input type="checkbox" checked={!!value.enabled} onChange={e => setField('enabled', e.target.checked)} />
+            Flujo activo
+          </label>
 
-      {/* Steps */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <h4 className="text-sm font-medium">Steps</h4>
-          <div className="flex gap-1">
-            <button className="btn btn-ghost btn-xs" onClick={() => addStep('send_message')}>+ mensaje</button>
-            <button className="btn btn-ghost btn-xs" onClick={() => addStep('wait')}>+ esperar</button>
-            <button className="btn btn-ghost btn-xs" onClick={() => addStep('ai_reply')} disabled={agents.length === 0} title={agents.length === 0 ? 'Crea un agente IA primero' : ''}>
-              + IA
-            </button>
-          </div>
-        </div>
-        <div className="space-y-2">
-          {value.steps.map((s, i) => (
-            <StepRow key={i} value={s} agents={agents} index={i} onChange={v => updateStep(i, v)} onRemove={() => removeStep(i)} />
-          ))}
-          {value.steps.length === 0 && <p className="text-xs opacity-60">Agrega al menos un step.</p>}
-        </div>
-      </div>
+          {/* Triggers */}
+          <Section title="Triggers" hint="Cuando dispara este flujo">
+            <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
+              <button className="btn btn-secondary btn-sm" type="button" onClick={() => addTrigger('keyword')}>+ keyword</button>
+              <button className="btn btn-secondary btn-sm" type="button" onClick={() => addTrigger('catchall')}>+ catchall</button>
+              <button className="btn btn-secondary btn-sm" type="button" onClick={() => addTrigger('schedule')}>+ schedule</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {value.triggers.map((t, i) => (
+                <TriggerRow key={i} value={t} onChange={v => updateTrigger(i, v)} onRemove={() => removeTrigger(i)} />
+              ))}
+              {value.triggers.length === 0 && <EmptyHint text="Agrega al menos un trigger" />}
+            </div>
+          </Section>
 
-      <div className="flex justify-end gap-2 pt-2">
-        <button className="btn btn-secondary btn-sm" onClick={onCancel} disabled={saving}>Cancelar</button>
-        <button
-          className="btn btn-primary btn-sm"
-          onClick={() => void onSave()}
-          disabled={saving || !value.name.trim() || value.triggers.length === 0 || value.steps.length === 0}
-        >
-          {saving ? 'Guardando…' : 'Guardar'}
-        </button>
+          {/* Steps */}
+          <Section title="Steps" hint="Que hace el flujo (en orden)">
+            <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
+              <button className="btn btn-secondary btn-sm" type="button" onClick={() => addStep('send_message')}>+ mensaje</button>
+              <button className="btn btn-secondary btn-sm" type="button" onClick={() => addStep('wait')}>+ esperar</button>
+              <button
+                className="btn btn-secondary btn-sm"
+                type="button"
+                onClick={() => addStep('ai_reply')}
+                disabled={agents.length === 0}
+                title={agents.length === 0 ? 'Crea un agente IA primero' : ''}
+              >
+                + IA
+              </button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {value.steps.map((s, i) => (
+                <StepRow key={i} value={s} agents={agents} index={i} onChange={v => updateStep(i, v)} onRemove={() => removeStep(i)} />
+              ))}
+              {value.steps.length === 0 && <EmptyHint text="Agrega al menos un step" />}
+            </div>
+          </Section>
+        </div>
+
+        <div className="card-h" style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, borderTop: '1px solid var(--border)' }}>
+          <button className="btn btn-secondary" onClick={onClose} disabled={saving}>
+            Cancelar
+          </button>
+          <button className="btn btn-brand" onClick={() => void onSave()} disabled={saving || !canSave}>
+            {saving ? 'Guardando…' : isEdit ? 'Guardar cambios' : 'Crear flujo'}
+          </button>
+        </div>
       </div>
     </div>
   );
 };
 
 // ============================================================
+// Helpers UI
+// ============================================================
+
+const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <label style={{ fontSize: 12, color: 'var(--fg-muted)', fontWeight: 550 }}>{label}</label>
+    {children}
+  </div>
+);
+
+const Section = ({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) => (
+  <div>
+    <div style={{ marginBottom: 8 }}>
+      <div style={{ fontSize: 13, fontWeight: 600 }}>{title}</div>
+      {hint && <div style={{ fontSize: 11, color: 'var(--fg-faint)', marginTop: 2 }}>{hint}</div>}
+    </div>
+    {children}
+  </div>
+);
+
+const EmptyHint = ({ text }: { text: string }) => (
+  <div style={{ fontSize: 12, color: 'var(--fg-faint)', fontStyle: 'italic', padding: '6px 2px' }}>{text}</div>
+);
+
+const rowStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  padding: 10,
+  borderRadius: 'var(--r-md)',
+  background: 'var(--bg-elev)',
+  border: '1px solid var(--border)',
+};
+
+// ============================================================
 // Trigger row
 // ============================================================
 const TriggerRow = ({ value, onChange, onRemove }: { value: FlowTrigger; onChange: (v: FlowTrigger) => void; onRemove: () => void }) => (
-  <div className="flex items-center gap-2 p-2 rounded bg-zinc-900/40">
+  <div style={rowStyle}>
     <select
-      className="input input-sm"
+      className="input"
+      style={{ maxWidth: 130 }}
       value={value.type}
       onChange={e => {
         const t = e.target.value as FlowTrigger['type'];
@@ -327,11 +396,29 @@ const TriggerRow = ({ value, onChange, onRemove }: { value: FlowTrigger; onChang
 
     {value.type === 'keyword' && (
       <>
-        <input className="input input-sm flex-1" placeholder="palabra clave" value={value.value} onChange={e => onChange({ ...value, value: e.target.value })} />
-        <select className="input input-sm" value={value.match} onChange={e => onChange({ ...value, match: e.target.value as FlowTriggerKeywordMatch })}>
-          {MATCH_OPTIONS.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
+        <input
+          className="input"
+          style={{ flex: 1 }}
+          placeholder="palabra clave"
+          value={value.value}
+          onChange={e => onChange({ ...value, value: e.target.value })}
+        />
+        <select
+          className="input"
+          style={{ maxWidth: 140 }}
+          value={value.match}
+          onChange={e => onChange({ ...value, match: e.target.value as FlowTriggerKeywordMatch })}
+        >
+          {MATCH_OPTIONS.map(o => (
+            <option key={o.v} value={o.v}>
+              {o.l}
+            </option>
+          ))}
         </select>
-        <label className="text-xs opacity-70 flex items-center gap-1">
+        <label
+          style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--fg-muted)' }}
+          title="Sensible a mayusculas"
+        >
           <input type="checkbox" checked={!!value.case_sensitive} onChange={e => onChange({ ...value, case_sensitive: e.target.checked })} />
           aA
         </label>
@@ -339,24 +426,47 @@ const TriggerRow = ({ value, onChange, onRemove }: { value: FlowTrigger; onChang
     )}
 
     {value.type === 'schedule' && (
-      <input className="input input-sm flex-1 font-mono" placeholder="cron: 0 9 * * *" value={value.cron} onChange={e => onChange({ type: 'schedule', cron: e.target.value })} />
+      <input
+        className="input mono"
+        style={{ flex: 1 }}
+        placeholder="0 9 * * *"
+        value={value.cron}
+        onChange={e => onChange({ type: 'schedule', cron: e.target.value })}
+      />
     )}
 
-    {value.type === 'catchall' && <span className="text-xs opacity-60 flex-1">cualquier mensaje (fallback)</span>}
+    {value.type === 'catchall' && (
+      <span style={{ flex: 1, fontSize: 12, color: 'var(--fg-faint)' }}>fallback: cualquier mensaje sin keyword</span>
+    )}
 
-    <button className="btn btn-ghost btn-xs text-red-400" onClick={onRemove}><Icon name="trash" size={12} /></button>
+    <button className="btn btn-ghost btn-sm" onClick={onRemove} style={{ color: 'var(--status-error)' }}>
+      <Icon name="trash" size={12} />
+    </button>
   </div>
 );
 
 // ============================================================
 // Step row
 // ============================================================
-const StepRow = ({ value, agents, index, onChange, onRemove }: { value: FlowStep; agents: IAiAgent[]; index: number; onChange: (v: FlowStep) => void; onRemove: () => void }) => (
-  <div className="p-2 rounded bg-zinc-900/40 space-y-2">
-    <div className="flex items-center gap-2">
-      <span className="text-xs opacity-50 w-6 text-center">{index + 1}.</span>
+const StepRow = ({
+  value,
+  agents,
+  index,
+  onChange,
+  onRemove,
+}: {
+  value: FlowStep;
+  agents: IAiAgent[];
+  index: number;
+  onChange: (v: FlowStep) => void;
+  onRemove: () => void;
+}) => (
+  <div style={{ ...rowStyle, flexDirection: 'column', alignItems: 'stretch' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <span style={{ fontSize: 11, color: 'var(--fg-faint)', width: 18, textAlign: 'center' }}>{index + 1}.</span>
       <select
-        className="input input-sm"
+        className="input"
+        style={{ maxWidth: 170 }}
         value={value.type}
         onChange={e => {
           const t = e.target.value as FlowStep['type'];
@@ -376,35 +486,41 @@ const StepRow = ({ value, agents, index, onChange, onRemove }: { value: FlowStep
             type="number"
             min={0}
             max={3600}
-            className="input input-sm w-24"
+            className="input"
+            style={{ maxWidth: 100 }}
             value={value.seconds}
             onChange={e => onChange({ type: 'wait', seconds: Number(e.target.value) || 0 })}
           />
-          <span className="text-xs opacity-60">segundos</span>
+          <span style={{ fontSize: 12, color: 'var(--fg-muted)' }}>segundos</span>
         </>
       )}
 
       {value.type === 'ai_reply' && (
         <select
-          className="input input-sm flex-1"
+          className="input"
+          style={{ flex: 1 }}
           value={value.agent_id}
           onChange={e => onChange({ type: 'ai_reply', agent_id: Number(e.target.value) })}
         >
           {agents.length === 0 && <option value={0}>(sin agentes — crea uno primero)</option>}
           {agents.map(a => (
-            <option key={a.id} value={a.id}>{a.name} · {a.provider}/{a.model}</option>
+            <option key={a.id} value={a.id}>
+              {a.name} · {a.provider}/{a.model}
+            </option>
           ))}
         </select>
       )}
 
-      <button className="btn btn-ghost btn-xs text-red-400 ml-auto" onClick={onRemove}><Icon name="trash" size={12} /></button>
+      <button className="btn btn-ghost btn-sm" onClick={onRemove} style={{ color: 'var(--status-error)', marginLeft: 'auto' }}>
+        <Icon name="trash" size={12} />
+      </button>
     </div>
 
     {value.type === 'send_message' && (
       <textarea
-        className="input w-full text-sm"
+        className="input"
         rows={3}
-        placeholder="Cuerpo del mensaje. Variables: {{contact.number}}, {{message.body}}"
+        placeholder="Cuerpo del mensaje. Variables disponibles: {{contact.number}}, {{message.body}}"
         value={value.body}
         onChange={e => onChange({ type: 'send_message', body: e.target.value })}
       />
