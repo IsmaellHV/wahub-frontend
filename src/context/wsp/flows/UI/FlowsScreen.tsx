@@ -238,7 +238,7 @@ const FlowEditorModal = ({ value, isEdit, agents, saving, onChange, onSave, onCl
       <div
         className="modal"
         onClick={e => e.stopPropagation()}
-        style={{ maxWidth: 'min(1200px, 95vw)', width: '95vw', height: '90vh', display: 'flex', flexDirection: 'column', padding: 0 }}
+        style={{ maxWidth: 'none', width: '98vw', height: '94vh', display: 'flex', flexDirection: 'column', padding: 0 }}
       >
         {/* Header */}
         <div className="card-h" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>

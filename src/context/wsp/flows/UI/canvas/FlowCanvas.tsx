@@ -135,7 +135,7 @@ export const FlowCanvas = ({ value, agents, onChange }: Props) => {
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '180px 1fr 280px', height: '100%', minHeight: 460 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr 260px', height: '100%', minHeight: 460 }}>
       {/* Palette */}
       <div style={{ borderRight: '1px solid var(--border)', padding: 12, display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto' }}>
         <PaletteSection title="Triggers">
