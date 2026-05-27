@@ -44,26 +44,42 @@ const interpolate = (s: string, vars?: Record<string, string | number>): string 
 
 interface Props {
   children: React.ReactNode;
-  // Resolved by the server (middleware + cookie) so SSR and the first client
-  // render agree — kills the EN → ES content flash on hydration.
+  // Opcional: si por algun motivo el caller quiere forzar un locale
+  // inicial. En el flujo normal el Provider lee cookie/localStorage en
+  // mount — esto permite que el layout sea 100% estatico (cacheable en CDN).
   initialLocale?: Locale;
 }
 
-export const I18nProvider = ({ children, initialLocale = 'en' }: Props) => {
-  const [locale, setLocaleState] = useState<Locale>(initialLocale);
+// Detecta locale solo en cliente. Devuelve `null` durante SSR.
+const detectClientLocale = (): Locale | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const m = document.cookie.match(/(?:^|; )wahub:locale=(es|en)/);
+    if (m) return m[1] as Locale;
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    if (stored === 'es' || stored === 'en') return stored;
+    const nav = (navigator.language || 'en').toLowerCase();
+    return nav.startsWith('es') ? 'es' : 'en';
+  } catch {
+    return 'en';
+  }
+};
 
-  // Sync localStorage so the toggle persists across explicit user changes
-  // and stays consistent with the cookie set by the middleware.
+export const I18nProvider = ({ children, initialLocale }: Props) => {
+  // SSR: usa `initialLocale` o `'en'`. Cliente: lee cookie/localStorage/navigator
+  // sincronamente en el useState initializer → primer render coincide con la
+  // realidad del usuario sin flash.
+  const [locale, setLocaleState] = useState<Locale>(() => initialLocale ?? detectClientLocale() ?? 'en');
+
+  // Persiste localStorage en mount si aun no estaba.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored !== initialLocale && (stored === 'en' || stored === 'es')) {
-      // User picked a locale in another tab — honor it.
-      setLocaleState(stored);
-    } else if (!stored) {
-      window.localStorage.setItem(STORAGE_KEY, initialLocale);
-    }
-  }, [initialLocale]);
+    if (!stored) window.localStorage.setItem(STORAGE_KEY, locale);
+    else if ((stored === 'en' || stored === 'es') && stored !== locale) setLocaleState(stored);
+    // Solo en mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const setLocale = useCallback((l: Locale) => {
     setLocaleState(l);
