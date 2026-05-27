@@ -14,7 +14,10 @@ const connRepo = new RepositoryConnectionImpl();
 const PROVIDER_MODELS: Record<AiProvider, string[]> = {
   openai: ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-4.1-mini'],
   anthropic: ['claude-sonnet-4-5', 'claude-opus-4-1', 'claude-haiku-4-5'],
-  deepseek: ['deepseek-chat', 'deepseek-reasoner'],
+  // DeepSeek V4 (actual). Los antiguos `deepseek-chat` / `deepseek-reasoner`
+  // siguen funcionando como aliases pero quedaran deprecated; se mapean a
+  // los modos non-thinking / thinking de v4-flash respectivamente.
+  deepseek: ['deepseek-v4-flash', 'deepseek-v4-pro', 'deepseek-chat', 'deepseek-reasoner'],
   custom: [''],
 };
 
