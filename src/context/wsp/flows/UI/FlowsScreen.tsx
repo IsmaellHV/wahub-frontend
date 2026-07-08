@@ -182,6 +182,31 @@ export const FlowsScreen = () => {
                       {f.steps.map(stepLabel).join(' → ') || '—'}
                     </div>
                   </div>
+                  {(() => {
+                    const aiSteps = f.steps.filter(s => s.type === 'ai_reply');
+                    const broken = aiSteps.filter(s => {
+                      const a = agents.find(x => x.id === (s as { agent_id?: number }).agent_id);
+                      return !a || !a.enabled;
+                    });
+                    if (!broken.length) return null;
+                    const missing = broken.some(s => !agents.find(x => x.id === (s as { agent_id?: number }).agent_id));
+                    return (
+                      <div
+                        className="mono"
+                        style={{
+                          marginTop: 10,
+                          fontSize: 11,
+                          padding: '6px 9px',
+                          borderRadius: 8,
+                          color: 'var(--status-warn, #fbbf24)',
+                          border: '1px solid color-mix(in srgb, var(--status-warn, #fbbf24) 35%, var(--border))',
+                          background: 'color-mix(in srgb, var(--status-warn, #fbbf24) 8%, transparent)',
+                        }}
+                      >
+                        ⚠ {missing ? 'Un paso IA apunta a un agente que ya no existe.' : 'El agente IA de este flujo está apagado — actívalo en Agentes IA o no responderá.'}
+                      </div>
+                    );
+                  })()}
                   <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
                     <button className="btn btn-secondary btn-sm" onClick={() => startEdit(f)}>
                       <Icon name="edit" size={12} /> Editar

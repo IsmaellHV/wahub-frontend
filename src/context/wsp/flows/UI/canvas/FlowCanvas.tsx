@@ -32,12 +32,18 @@ interface Props {
 
 const DRAG_TYPE = 'application/wahub-flow-node';
 
-type PaletteItem = { kind: 'trigger' | 'step'; subtype: FlowTrigger['type'] | FlowStep['type']; label: string; icon: 'chat' | 'layers' | 'refresh' | 'send' | 'pause' | 'sparkles' };
+type PaletteItem = {
+  kind: 'trigger' | 'step';
+  subtype: FlowTrigger['type'] | FlowStep['type'];
+  label: string;
+  icon: 'chat' | 'layers' | 'refresh' | 'send' | 'pause' | 'sparkles';
+  comingSoon?: boolean;
+};
 
 const PALETTE: PaletteItem[] = [
   { kind: 'trigger', subtype: 'keyword', label: 'Keyword', icon: 'chat' },
   { kind: 'trigger', subtype: 'catchall', label: 'Catchall', icon: 'layers' },
-  { kind: 'trigger', subtype: 'schedule', label: 'Schedule', icon: 'refresh' },
+  { kind: 'trigger', subtype: 'schedule', label: 'Schedule', icon: 'refresh', comingSoon: true },
   { kind: 'step', subtype: 'send_message', label: 'Enviar mensaje', icon: 'send' },
   { kind: 'step', subtype: 'wait', label: 'Esperar', icon: 'pause' },
   { kind: 'step', subtype: 'ai_reply', label: 'Respuesta IA', icon: 'sparkles' },
@@ -223,8 +229,9 @@ const PaletteSection = ({ title, children }: { title: string; children: React.Re
 
 const PaletteItemView = ({ item, onDragStart }: { item: PaletteItem; onDragStart: (e: React.DragEvent, item: PaletteItem) => void }) => (
   <div
-    draggable
-    onDragStart={e => onDragStart(e, item)}
+    draggable={!item.comingSoon}
+    onDragStart={e => (item.comingSoon ? e.preventDefault() : onDragStart(e, item))}
+    title={item.comingSoon ? 'Próximamente — el motor aún no ejecuta este trigger' : undefined}
     style={{
       display: 'flex',
       alignItems: 'center',
@@ -234,8 +241,9 @@ const PaletteItemView = ({ item, onDragStart }: { item: PaletteItem; onDragStart
       background: 'var(--bg-elev)',
       border: '1px solid var(--border)',
       fontSize: 12,
-      cursor: 'grab',
+      cursor: item.comingSoon ? 'not-allowed' : 'grab',
       userSelect: 'none',
+      opacity: item.comingSoon ? 0.45 : 1,
     }}
   >
     <span style={{ display: 'inline-flex', padding: 4, borderRadius: 999, background: item.kind === 'trigger' ? 'color-mix(in srgb, var(--brand-500) 20%, transparent)' : 'var(--bg)', color: item.kind === 'trigger' ? 'var(--brand-500)' : 'var(--fg-muted)' }}>

@@ -47,7 +47,7 @@ const blankAgent = (): ISaveAgentInput => ({
   greeting: '¡Hola! ¿En qué puedo ayudarte?',
   temperature: 0.7,
   max_tokens: 500,
-  enabled: false,
+  enabled: true,
   connection_id: null,
   api_key: '',
 });
