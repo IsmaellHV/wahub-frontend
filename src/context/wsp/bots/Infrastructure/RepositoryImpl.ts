@@ -4,7 +4,9 @@ import { MOCK_BOTS } from './mockBots';
 import type { IRepositoryBot } from '../Domain/Repository';
 import type { IBot } from '../Domain/IBot';
 
-const USE_MOCKS = !process.env.NEXT_PUBLIC_API_URL;
+// Explicit opt-in: the API URL is now optional (relative by default), so its
+// absence can no longer mean "no backend".
+const USE_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS === 'true';
 
 export class RepositoryBotImpl implements IRepositoryBot {
   async list(): Promise<IBot[]> {
