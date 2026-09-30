@@ -1,4 +1,5 @@
 'use client';
+import { ENVIRONMENT } from '@env';
 import { AdapterStorage, STORAGE_KEYS } from './AdapterStorage';
 
 export interface ApiError {
@@ -13,7 +14,7 @@ interface ApiOptions extends Omit<RequestInit, 'body'> {
   _retry?: boolean;
 }
 
-const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7001/api/wahub').replace(/\/$/, '');
+const API_URL = ENVIRONMENT.API.URL;
 
 const REFRESH_PATH = '/acceso/token/refresh';
 

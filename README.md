@@ -80,15 +80,23 @@ npm run dev                # http://localhost:3000
 
 ### Environment
 
-| Variable              | Notes                                                           |
-| --------------------- | --------------------------------------------------------------- |
-| `NEXT_PUBLIC_APP_URL` | Canonical base URL of the SPA itself                            |
-| `NEXT_PUBLIC_API_URL` | wahub-backend base URL (e.g. `http://localhost:7001/api/wahub`) |
-| `NEXT_PUBLIC_WS_URL`  | wahub-backend WebSocket URL (e.g. `ws://localhost:8000/ws`)     |
+| Variable                | Notes                                                                 |
+| ----------------------- | --------------------------------------------------------------------- |
+| `NEXT_PUBLIC_BASE_PATH` | Where the app is mounted, e.g. `/wahub`                               |
+| `NEXT_PUBLIC_API_URL`   | wahub-backend base URL. Default: `/api/wahub`, on the page's own host |
+| `NEXT_PUBLIC_WS_URL`    | WebSocket URL. Default: `wss://<page host>/wsWahub/`                  |
+| `NEXT_PUBLIC_APP_URL`   | The app's own URL. Default: `<page origin><base path>`                |
+| `NEXT_PUBLIC_USE_MOCKS` | `true` serves the bots screen from local mocks                        |
 
-All three are `NEXT_PUBLIC_*` and **inlined into the client bundle at build
-time** — they must be present before `npm run build`. CI decodes the deploy
-`.env` from a base64 secret right before building.
+All are `NEXT_PUBLIC_*` and **inlined into the client bundle at build time** —
+they must be present before `npm run build`. CI decodes the deploy `.env` from a
+base64 secret right before building.
+
+**Leave the URLs empty for any deployed build.** Then the app talks to the host
+it was served from, and one image works on every domain (production, the
+Kubernetes lab…). An absolute URL pins the image to that domain: the lab copy
+would call production. Set them only for local development, where the backend
+runs on another port.
 
 ### Useful scripts
 

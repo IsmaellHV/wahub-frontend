@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { ENVIRONMENT } from '@env';
 import { Icon } from '@shared/UI/components/Icon';
 import { RepositoryApiKeyImpl } from '../Infrastructure/RepositoryImpl';
 import type { IApiKey, IApiKeyCreated } from '../Domain/IApiKey';
@@ -33,6 +34,11 @@ export const ApiKeysScreen = () => {
   // Confirm-revoke state
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [revokeBusy, setRevokeBusy] = useState<number | null>(null);
+
+  // The curl example needs a full URL. When the API is relative, the origin is
+  // filled in after mount, so the server render and the first client render match.
+  const [origin, setOrigin] = useState('');
+  useEffect(() => setOrigin(window.location.origin), []);
 
   const reload = () => {
     setLoading(true);
@@ -89,7 +95,7 @@ export const ApiKeysScreen = () => {
     }
   };
 
-  const apiBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7001/api/wahub').replace(/\/$/, '');
+  const apiBase = ENVIRONMENT.API.URL.startsWith('/') ? `${origin}${ENVIRONMENT.API.URL}` : ENVIRONMENT.API.URL;
   const exampleKey = revealed?.key ?? 'wh_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
   const curlExample = `curl -X POST ${apiBase}/v1/messages/text \\
   -H "Content-Type: application/json" \\

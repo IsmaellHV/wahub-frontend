@@ -15,7 +15,11 @@ export const AdapterConfigure = {
   },
 
   WS: {
-    URL: ENVIRONMENT.WS.URL,
+    // Read on every connect, not when the module loads: without NEXT_PUBLIC_WS_URL
+    // it comes from window.location, which only exists in the browser.
+    get URL(): string {
+      return ENVIRONMENT.WS.URL;
+    },
     EVENT_SUBSCRIBE: 'subscribe-connection',
     CHANNEL: (id: number) => `connection:${id}`,
   },
