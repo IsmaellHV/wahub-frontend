@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
 import { ThemeProvider } from '@shared/UI/ThemeProvider';
@@ -63,11 +64,17 @@ const bootstrapScript = `
 })();
 `;
 
+// Umami propio (panel en estadisticas.ismaelhv.com, sin cookies). /visitas.js
+// vive en la raiz del dominio, fuera del basePath: Traefik lo manda a Umami.
+// Solo en produccion y sin query ni hash.
+const UMAMI_WEB = '3d27484a-99b5-4bee-9c60-2ac628493a38';
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${GeistSans.variable} ${GeistMono.variable}`} data-theme="dark">
       <body>
         <script dangerouslySetInnerHTML={{ __html: bootstrapScript }} />
+        {process.env.NODE_ENV === 'production' ? <Script src="/visitas.js" strategy="afterInteractive" data-website-id={UMAMI_WEB} data-domains="ismaelhv.com" data-exclude-search="true" data-exclude-hash="true" /> : null}
         <I18nProvider>
           <ThemeProvider>{children}</ThemeProvider>
         </I18nProvider>
