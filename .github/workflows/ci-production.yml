@@ -24,7 +24,7 @@ jobs:
 
       - name: Set up Node.js
         run: |
-          curl -sL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+          curl -sL https://deb.nodesource.com/setup_24.x | sudo -E bash -
           sudo apt-get install -y nodejs
           node -v
           npm -v
@@ -52,9 +52,9 @@ jobs:
       - name: Git Semantic Version
         uses: PaulHatch/semantic-version@v5.4.0
         with:
-          major_pattern: 'mayor'
-          minor_pattern: 'feat'
-          version_format: '${major}.${minor}.${{ github.run_number }}'
+          major_pattern: "mayor"
+          minor_pattern: "feat"
+          version_format: "${major}.${minor}.${{ github.run_number }}"
         id: version
 
       - name: Set up Docker Buildx
